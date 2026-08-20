@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IS-DLSS Professional LMS</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#075c3a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--g:#075c3a;--earth:#a84b20;--sun:#d7a62a;--kente:#f0b323;--g2:#087f52;--gold:#d7a62a;--blue:#3b82f6;--purple:#7c3aed;--red:#dc4c64;--bg:#f5f8f7;--line:#dfe7e2;--ink:#17312a;--muted:#65746e;--card:#fff;--shadow:0 8px 24px rgba(23,49,42,.07)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#063c29ee,#0b5d3bee),radial-gradient(circle at 15% 20%,#d7a62a33,transparent 28%),radial-gradient(circle at 85% 80%,#a84b2033,transparent 30%);z-index:100;display:grid;place-items:center;padding:20px}
+.login-card{width:min(460px,100%);background:#fff;border-radius:24px;padding:30px;box-shadow:0 25px 80px #001b10aa;border:1px solid #ffffff55}
+.login-brand{display:flex;gap:12px;align-items:center;margin-bottom:22px}.login-logo{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#0b5d3b,#d7a62a);display:grid;place-items:center;color:#fff;font-size:26px}
+.login-card h1{margin:0 0 4px}.login-card label{display:block;font-size:12px;font-weight:800;margin:13px 0 6px}.login-card input,.login-card select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}.password-wrap{position:relative}.password-wrap button{position:absolute;right:6px;top:6px;border:0;background:#edf4f0;color:var(--g);border-radius:7px;padding:7px;cursor:pointer}.login-btn{width:100%;margin-top:17px;padding:13px;border:0;border-radius:11px;background:linear-gradient(90deg,#0b5d3b,#087f52);color:#fff;font-weight:850;cursor:pointer}.forgot{border:0;background:none;color:var(--g);font-weight:800;cursor:pointer;padding:12px 0}.login-error{padding:10px;border-radius:9px;background:#fff0f1;color:#a3223c;font-size:12px;margin-top:10px}.strength{font-size:11px;margin-top:5px}.pattern{font-size:11px;color:var(--muted);margin-top:4px}.africa-strip{height:7px;border-radius:99px;background:linear-gradient(90deg,#0b5d3b 0 25%,#d7a62a 25% 50%,#a84b20 50% 75%,#17312a 75%)}
+.top{height:70px;background:linear-gradient(110deg,#073f2a,#0b5d3b,#087f52);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:20;box-shadow:0 4px 18px #063d2b33}
+.brand{font-size:19px;font-weight:800;letter-spacing:.2px}.brand small{display:block;font-size:10px;font-weight:500;opacity:.82}
+.top-actions{display:flex;align-items:center;gap:10px}.role-switch{border:1px solid #ffffff44;background:#ffffff16;color:#fff;border-radius:10px;padding:9px 12px;font-weight:700}.menu{display:none;background:none;border:0;color:white;font-size:25px}
+.layout{display:flex;min-height:calc(100vh - 110px)}aside{width:255px;background:white;border-right:1px solid var(--line);padding:17px;flex:none}
+.user{padding:14px;background:linear-gradient(135deg,#edf7f1,#f9fbfa);border:1px solid var(--line);border-radius:14px;margin-bottom:15px}
+.avatar{width:38px;height:38px;border-radius:12px;background:var(--g);color:white;display:grid;place-items:center;font-weight:800;float:left;margin-right:10px}
+.nav-section{font-size:10px;text-transform:uppercase;color:#89958f;font-weight:800;margin:17px 8px 6px}.nav{display:block;width:100%;padding:11px;border:0;background:white;text-align:left;border-radius:9px;margin:3px 0;cursor:pointer;color:var(--ink);font-weight:600}.nav:hover,.nav.active{background:#e8f3ed;color:var(--g);font-weight:800}
+main{flex:1;padding:28px;max-width:1280px;margin:auto;width:100%}
+.hero{background:linear-gradient(135deg,#0b5d3b,#174d3b 55%,#087f52);color:white;padding:30px;border-radius:20px;position:relative;overflow:hidden;box-shadow:var(--shadow)}.hero:after{content:"";position:absolute;width:190px;height:190px;border-radius:50%;right:-50px;top:-70px;background:#ffffff12}.hero h1{margin:8px 0;font-size:30px}.hero p{max-width:760px;color:#e7f5ee}
+.badge{display:inline-block;background:#fff1b8;color:#5a4800;padding:4px 9px;border-radius:99px;font-size:11px;font-weight:800}.role-badge{padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800}.admin{background:#ede9fe;color:#5b21b6}.teacher{background:#e0f2fe;color:#075985}.student{background:#dcfce7;color:#166534}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+.card,.screen{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}.card h3,.card h2{margin-top:0}.metric{font-size:28px;font-weight:850;color:var(--g)}.muted{color:var(--muted)}.small{font-size:12px}
+button.btn{background:var(--g);color:white;border:0;padding:10px 15px;border-radius:9px;font-weight:800;cursor:pointer}button.alt{background:#edf4f0;color:var(--g)}button.danger{background:#fff0f1;color:#a3223c}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.quick{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.quick button{border:1px solid var(--line);background:#fff;padding:10px 13px;border-radius:10px;font-weight:700;cursor:pointer}
+.course{display:flex;gap:12px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:11px;margin:8px 0;background:white}.num{width:36px;height:36px;border-radius:10px;background:#e8f3ed;color:var(--g);display:grid;place-items:center;font-weight:800}.grow{flex:1}.tag{font-size:11px;color:var(--muted)}
+.progress{height:9px;background:#e5eee9;border-radius:9px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--g),var(--gold))}
+.kpi{display:flex;justify-content:space-between;gap:12px;align-items:center}.trend{font-size:12px;color:#18804f;font-weight:800}.list{display:grid;gap:10px}.list-row{padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff;display:flex;align-items:center;gap:12px}.status{margin-left:auto;font-size:11px;font-weight:800;padding:4px 8px;border-radius:99px;background:#eef7f1;color:#166534}
+.resource{min-height:145px}.resource-icon{font-size:25px}.resource h3{margin:8px 0 4px}.resource p{font-size:13px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line);font-size:13px}th{background:#f1f6f3;color:#496158}
+.notice{padding:13px 15px;border-radius:12px;background:#eef7f1;border:1px solid #d9eee2}.warning{background:#fff8e8;border-color:#f5e3ae}.dangerbox{background:#fff0f1;border-color:#f4c9d0}
+.choices{display:grid;gap:10px;margin:15px 0}.choice{padding:13px;border:1px solid var(--line);background:white;border-radius:10px;text-align:left;cursor:pointer}.choice:hover,.selected{border:2px solid var(--g)!important}.feedback{padding:13px;background:#eef7f1;border-radius:9px;margin:10px 0}.bad{background:#fff0ef}.good{background:#e9f8ee}
+textarea{width:100%;min-height:130px;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.forum{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}.post{padding:13px;border:1px solid var(--line);border-radius:11px;margin:8px 0}.post b{font-size:13px}
+footer{text-align:center;color:var(--muted);padding:16px;font-size:11px}
+@media(max-width:900px){
+  .menu{display:block}
+  aside{position:fixed;z-index:30;top:62px;bottom:0;left:-270px;width:270px;transition:.2s;overflow:auto;box-shadow:10px 0 30px rgba(0,0,0,.12)}
+  .open aside{left:0}
+  .layout.open:after{content:"";position:fixed;inset:62px 0 0 0;background:rgba(15,40,30,.28);z-index:20}
+  .grid,.grid4{grid-template-columns:1fr 1fr}
+  .forum{grid-template-columns:1fr}
+  main{padding:15px}
+  .hero{padding:20px}
+  .kpi{gap:12px;align-items:flex-start}
+}
+@media(max-width:600px){
+  body{font-size:14px}
+  .top{height:62px;padding:0 10px;gap:8px}
+  .brand{font-size:15px;line-height:1.1}
+  .brand small{display:none}
+  .top-actions{gap:5px}
+  .top-actions .btn.alt{padding:8px 9px;font-size:11px;margin-right:0!important}
+  .role-switch{max-width:42px;min-width:42px;padding:8px 2px}
+  .menu{font-size:20px;padding:7px 9px}
+  .grid,.grid4{grid-template-columns:1fr}
+  .hero{padding:17px;border-radius:14px}
+  .hero h1{font-size:22px;line-height:1.18}
+  .hero p{font-size:13px}
+  .quick{display:grid;grid-template-columns:1fr;gap:8px}
+  .quick button,.actions .btn{width:100%}
+  .card{padding:14px;border-radius:13px}
+  .metric{font-size:27px}
+  .kpi{display:flex;flex-direction:column}
+  .kpi>.btn{width:100%;margin-top:4px}
+  .course{gap:9px}
+  table{min-width:650px}
+  table th,table td{padding:9px;font-size:12px;white-space:nowrap}
+  .lesson-content{font-size:14px;line-height:1.65}
+  .card iframe{width:100%;max-width:100%;min-height:190px}
+  .choices{gap:8px}
+  .choice{padding:12px;font-size:13px}
+  textarea{min-height:110px}
+  footer{padding-bottom:80px}
+  #moduleQuiz + .btn{position:sticky;bottom:12px;z-index:12;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#0b8f55;margin-right:6px}
+.connection-bar{margin:10px 0;padding:9px 12px;border-radius:10px;background:#eaf7f0;color:#075c3a;font-size:12px;font-weight:700}.connection-bar.offline{background:#fff4df;color:#805400}.install-banner{display:none;margin:10px 0;padding:10px 12px;border-radius:10px;background:#edf4ff;color:#164e8a;font-size:12px;font-weight:700}.install-banner button{float:right;border:0;background:#164e8a;color:white;border-radius:7px;padding:5px 9px;font-weight:800}
+</style>
+</head>
+<body>
+<div id="offlineBanner" class="connection-bar offline" style="display:none">Offline mode: cached learning content is available. Lesson and quiz submissions are queued and will sync safely when you reconnect.</div>
+<div id="installBanner" class="install-banner"><button onclick="installPwa()">Install</button>Install IS-DLSS on this device for faster access.</div>
+<div id="loginOverlay" class="login-overlay">
+  <div class="login-card">
+    <div class="africa-strip"></div>
+    <div class="login-brand">
+      <div class="login-logo">🌍</div>
+      <div><b>IS-DLSS</b><div class="small muted">African Educational LMS</div></div>
+    </div>
+    <h1>Secure sign in</h1>
+    <p class="muted">Choose your role and enter your username and password.</p>
+    <label>Role</label>
+    <select id="loginRole">
+      <option value="Administrator">🛡️ Administrator</option>
+      <option value="Teacher">👩🏾‍🏫 Teacher</option>
+      <option value="Student">🎓 Student</option>
+    </select>
+    <label>Username or email</label>
+    <input id="loginUsername" autocomplete="username" placeholder="Enter username or email">
+    <label>Password</label>
+    <div class="password-wrap"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter password"><button type="button" onclick="togglePassword()">Show</button></div>
+    <div class="pattern">Password must be at least 8 characters and contain letters, numbers and a special character.</div>
+    <button class="login-btn" onclick="login()">SIGN IN</button>
+    <button class="forgot" onclick="forgotPassword()">Forgot password?</button>
+    <div id="loginMessage"></div>
+  </div>
+</div>
+<header class="top">
+  <div class="brand">IS-DLSS <small>Integrated Science Digital Learning Support System</small></div>
+  <div class="top-actions">
+    <select id="role" class="role-switch" onchange="setRole(this.value)">
+      <option value="Administrator">🛡️ Administrator</option>
+      <option value="Teacher" selected>👩🏾‍🏫 Teacher</option>
+      <option value="Student">🎓 Student</option>
+    </select>
+    <button class="btn alt" onclick="logout()" style="margin-right:8px">Log out</button><button class="menu" onclick="document.querySelector('.layout').classList.toggle('open')">☰</button>
+  </div>
+</header>
+<div class="layout">
+<aside>
+  <div class="user"><div class="avatar" id="avatar">T</div><b id="userName">Teacher Demo</b><br><small id="org">Odorgonno SHS • CPD</small><div style="clear:both"></div><br><span id="sideRole" class="role-badge teacher">TEACHER</span></div>
+  <div class="nav-section">Workspace</div>
+  <button class="nav active" onclick="show('dashboard',this)">⌂ Dashboard</button>
+  <button class="nav" onclick="show('supervision',this)">◉ Supervision</button>
+  <button class="nav" onclick="show('courses',this)">▣ Courses</button>
+  <button class="nav" onclick="show('assessment',this)">✓ Assessment</button>
+  <button class="nav" onclick="notifications(this)">🔔 Inbox <span id="notifBadge" class="status" style="display:none;margin-left:5px">0</span></button>
+  <button class="nav" onclick="show('resources',this)">▤ Resource Library</button>
+  <button class="nav" onclick="show('analytics',this)">◔ Analytics</button>
+  <button class="nav" onclick="show('forum',this)">💬 Discussion Forum</button>
+  <button class="nav" onclick="show('videos',this)">▶️ Video Learning</button>
+  <div class="nav-section">Management</div>
+  <button class="nav" id="usersNav" onclick="show('users',this)">♙ Users & Roles</button>
+  <button class="nav" id="managementNav" onclick="show('management',this)">⚙ Management</button>
+  <button class="nav" onclick="show('about',this)">ⓘ About</button>
+</aside>
+<main id="main"></main>
+</div>
+<footer>IS-DLSS Professional LMS Prototype • Role-based supervision • 2026</footer>
+
+<script>
+const resources=[
+['Learner-Centred Lesson Checklist','🧭','Lesson planning job aid','Learner-centred practice, practical activity, formative checking and feedback.'],
+['Questioning Stems for Science Teachers','❓','Questioning toolkit','Prompts for probing reasoning, misconceptions and evidence.'],
+['Formative Assessment Toolkit','✓','Assessment toolkit','Quick checks, feedback routines and evidence collection.'],
+['Peer Instruction Guide','👥','Facilitation guide','Structured peer discussion and concept-check routines.'],
+['Exit Ticket Bank','🎫','Assessment bank','Ready-to-use short exit questions for lesson closure.'],
+['Inclusive Science Participation Strategies','🌍','Inclusion guide','Practical strategies to broaden learner participation.'],
+['Practical Science Lesson Safety Checklist','🧪','Safety job aid','Pre-lesson, during-lesson and post-lesson safety checks.'],
+['Digital Tool Selection Guide','💻','Technology guide','A practical way to select tools that support pedagogy.'],
+['Teacher Reflection Log','📝','Reflection tool','Structured reflection after teaching and CPD activities.'],
+['Learner-Centred Classroom Observation Checklist','👀','Observation tool','Evidence points for instructional supervision and coaching.'],
+['Microlearning Planning Template','⚡','Planning template','Plan short, focused learning experiences.'],
+['Teacher CPD Self-Assessment','📊','Self-assessment','Identify strengths, priorities and professional learning needs.']
+];
+const screens=[['Welcome','Welcome to Module 1: From Telling to Guiding.','orientation'],['Learning Objective','Select and apply a lesson sequence combining a practical or inquiry activity with formative assessment and feedback.','objective'],['Activation — Quick Poll','When the syllabus is overloaded, is it better to prioritise finishing topics through dictation than to slow down for practical activity?','poll'],['Evidence — Why This Matters','The project identifies declining Integrated Science performance alongside teacher-centred practice, limited practical activity and weak formative assessment.','content'],['Practical Activity Rule','Every instructional unit should include a practical or inquiry element. Where equipment is limited, locally available low-cost materials can be used.','content'],['Six Signs of Teacher-Centred Drift','Tap each warning sign to reveal it.','cards'],['Scenario — Madam Abena','Form Three, 46 students, two lessons behind, but enough vinegar, baking soda and red cabbage extract for groups. What should she do?','scenario'],['Consequence','Review the consequence of your scenario decision.','branch'],['Debrief','Practical/inquiry activity → formative check → immediate feedback.','debrief'],['Knowledge Check','Three graded items. Pass mark: 2 of 3.','quiz'],['Reflection','What low-cost practical/inquiry activity could you add to a lesson soon, and how will you check understanding?','reflection'],['Summary','Practical activity is required; pair it with formative checking and immediate feedback; use locally available materials where needed.','summary'],['Completion','Module complete. Apply one small change in your next lesson.','completion']];
+
+let state=JSON.parse(localStorage.getItem('isd')||'{"screen":1,"score":0,"passed":false,"reflection":""}');
+let currentView='dashboard';
+let liveChannel=null;
+let liveRefreshTimer=null;
+let liveRefreshBusy=false;
+function save(){localStorage.setItem('isd',JSON.stringify(state))}
+function pct(){return Math.round((state.screen-1)/12*100)}
+function setRole(r){role=r;localStorage.setItem('isdRole',r);applyRole();show('dashboard',document.querySelector('.nav'))}
+function applyRole(){
+ document.getElementById('role').value=role;
+ const cfg={Administrator:{name:'Administrator Demo',org:'IS-DLSS • Control Centre',initial:'A',cls:'admin'},Teacher:{name:'Teacher Demo',org:'Odorgonno SHS • CPD',initial:'T',cls:'teacher'},Student:{name:'Student Demo',org:'IS-DLSS • Learner Portal',initial:'S',cls:'student'}}[role];
+ document.getElementById('userName').textContent=cfg.name;document.getElementById('org').textContent=cfg.org;document.getElementById('avatar').textContent=cfg.initial;
+ const rb=document.getElementById('sideRole');rb.textContent=role.toUpperCase();rb.className='role-badge '+cfg.cls;
+ document.getElementById('usersNav').style.display=role==='Administrator'?'block':'none';
+ document.getElementById('managementNav').style.display=role==='Administrator'?'block':role==='Teacher'?'block':'none';
+}
+function show(v,el){
+ currentView=v;
+ document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));if(el)el.classList.add('active');
+ if(v==='dashboard')dashboard();else if(v==='supervision')supervision();else if(v==='courses'){if(role==='Student')studentLearning();else courses();}else if(v==='assessment')assessment();else if(v==='notifications')notifications();else if(v==='resources')resourceLibrary();else if(v==='analytics')analytics();else if(v==='forum')forum();else if(v==='videos')videos();else if(v==='users')users();else if(v==='management')management();else about();
+ document.querySelector('.layout').classList.remove('open');
+}
+async function dashboard(){
+ let content='';
+ const live=await liveStats();
+ const status=`<div id="connectionStatus" class="connection-bar"><span class=live-dot></span>Connecting to live IS-DLSS database…</div>`;
+ if(role==='Administrator') content=status+`<section class=hero><span class="role-badge admin">ADMINISTRATOR • CONTROL CENTRE</span><h1>Good morning. Your LMS is under control.</h1><p>Supervise teachers, monitor students, manage courses and roles, review assessment activity and use learning analytics from one professional workspace.</p><div class=quick><button onclick="show('users')">Manage Roles</button><button onclick="show('management')">Create Course</button><button onclick="show('analytics')">View Analytics</button></div></section><div class=grid4><div class=card><div class=metric>${live?.teachers ?? 0}</div><p>Teachers supervised</p><span class=trend>↑ 3 this term</span></div><div class=card><div class=metric>${live?.students ?? 0}</div><p>Students</p><span class=trend>↑ 12 active</span></div><div class=card><div class=metric>${live?.courses ?? 0}</div><p>Courses</p><span class=trend>11 active</span></div><div class=card><div class=metric>${live?.assessments ?? 0}</div><p>Assessment attempts</p><span class=trend>Live database</span></div></div><div class=grid><div class=card><h3>Supervision structure</h3><p>Administrator</p><div class=notice>↓ supervises teachers</div><p>Teachers</p><div class=notice>↓ supervise students</div><p>Students</p><p class=small muted>Administrator also retains direct visibility of students.</p></div><div class=card><h3>Recent assessment evidence</h3><div class=list><div class=list-row><b>Form 3 • Integrated Science</b><span class=status>78% avg.</span></div><div class=list-row><b>Teacher CPD • Module 1</b><span class=status>91% pass</span></div><div class=list-row><b>Practical Science Quiz</b><span class=status>64 attempts</span></div></div></div><div class=card><h3>Teacher support pulse</h3><p class=muted>Most-used resources this month</p><div class=list><div class=list-row>Formative Assessment Toolkit <span class=status>47</span></div><div class=list-row>Exit Ticket Bank <span class=status>39</span></div><div class=list-row>Observation Checklist <span class=status>31</span></div></div></div></div>`;
+ else if(role==='Teacher') {
+   const {data:rows}=await sb.rpc('teacher_supervision_students',{p_teacher_id:currentUser.id});
+   const supervised=rows||[];
+   const students=new Map(supervised.map(r=>[r.student_id,r]));
+   const progressValues=supervised.map(r=>Number(r.progress_percent||0));
+   const progressAvg=progressValues.length?Math.round(progressValues.reduce((a,x)=>a+x,0)/progressValues.length):0;
+   const scored=supervised.filter(r=>r.latest_score!==null&&Number(r.latest_max_score));
+   const quizAvg=scored.length?Math.round(scored.reduce((a,r)=>a+100*Number(r.latest_score||0)/Number(r.latest_max_score),0)/scored.length):0;
+   const support=[...students.values()].filter(r=>Number(r.progress_percent||0)<50 || (r.latest_score!==null&&Number(r.latest_max_score)&&100*Number(r.latest_score||0)/Number(r.latest_max_score)<50));
+   content=status+`<section class=hero><span class="role-badge teacher">TEACHER • INSTRUCTIONAL SUPERVISOR</span><h1>Welcome back, ${profile?.full_name||'Teacher'}.</h1><p>Monitor learner progress, review evidence, identify support needs and follow up with targeted instructional support.</p><div class=quick><button onclick="show('supervision')">Supervise Learners</button><button onclick="show('courses')">Manage My Courses</button><button onclick="show('analytics')">Open Analytics</button></div></section><div class=grid4><div class=card><div class=metric>${students.size}</div><p>Students enrolled</p></div><div class=card><div class=metric>${progressAvg}%</div><p>Average progress</p></div><div class=card><div class=metric>${quizAvg}%</div><p>Latest quiz average</p></div><div class=card><div class=metric>${support.length}</div><p>Need support</p></div></div><div class=grid><div class=card><h3>Students needing support</h3><div class=list>${support.slice(0,5).map(r=>{const qp=r.latest_score!==null&&Number(r.latest_max_score)?Math.round(100*Number(r.latest_score||0)/Number(r.latest_max_score)):null;return `<div class=list-row><div class=grow><b>${escapeHtml(r.student_name)}</b><div class=small muted>${escapeHtml(r.course_title)} • ${Number(r.progress_percent||0)}% progress${qp===null?'':' • '+qp+'% latest quiz'}</div></div><button class="btn alt" onclick="studentEvidence('${r.student_id}')">Review</button></div>`}).join('')||'<div class=notice>No learners currently meet the support threshold.</div>'}</div></div><div class=card><h3>Recent assessment evidence</h3><table><tr><th>Student</th><th>Course</th><th>Score</th></tr>${supervised.filter(r=>r.latest_score!==null).slice(0,6).map(r=>`<tr><td>${escapeHtml(r.student_name)}</td><td>${escapeHtml(r.course_title)}</td><td>${Number(r.latest_max_score)?Math.round(100*Number(r.latest_score||0)/Number(r.latest_max_score)):0}%</td></tr>`).join('')||'<tr><td colspan=3>No assessment evidence yet.</td></tr>'}</table></div><div class=card><h3>Next best action</h3><div class=notice><b>Use evidence, then act.</b> Open a learner record to review completed lessons and quiz attempts before planning targeted support.</div><br><button class=btn onclick="show('supervision')">Open Supervision Centre</button></div></div>`;
+ }
+ else content=status+`<section class=hero><span class="role-badge student">STUDENT • LEARNER PORTAL</span><h1>Learn, practise, discuss and track your progress.</h1><p>Your learning space brings modules, interactive activities, quizzes, resources, certificates and discussion into one learner-centred dashboard.</p><div class=quick><button onclick="show('courses')">Continue Learning</button><button onclick="show('forum')">Join Discussion</button><button onclick="show('resources')">Resource Library</button></div></section><div class=grid4><div class=card><div class=metric>68%</div><p>Overall progress</p><div class=progress><i style="width:68%"></i></div></div><div class=card><div class=metric>4</div><p>Courses enrolled</p></div><div class=card><div class=metric>81%</div><p>Quiz average</p></div><div class=card><div class=metric>2</div><p>Certificates earned</p></div></div><div class=grid><div class=card><h3>Continue learning</h3><div class=course><div class=num>1</div><div class=grow><b>From Telling to Guiding</b><div class=muted>Practical activity & formative assessment</div><div class=progress><i style="width:${pct()}%"></i></div></div><span class=tag>${pct()}%</span></div><button class=btn onclick="courseStart()">Continue Module</button></div><div class=card><h3>My certificates</h3><div class=notice>🏅 Integrated Science CPD — Module 1</div><br><button class=btn onclick="alert('Certificate preview opened in the prototype.')">View Certificate</button></div><div class=card><h3>Learner resources</h3><p class=muted>Access teacher-shared and course resources from the library.</p><button class=btn onclick="show('resources')">Browse Resources</button></div></div>`;
+ document.getElementById('main').innerHTML=content;
+ hydrateConnection();
+}
+async function supervision(){
+ if(role==='Administrator'){
+   document.getElementById('main').innerHTML=`<div class=card><h2>Supervision Centre</h2><p class=muted>Live oversight of teachers, students, courses and assessment evidence.</p><div id=supervisionLive>Loading live supervision data…</div></div>`;
+   const [{data:users},{data:courses},{data:enrolments},{data:attempts},{data:progress}]=await Promise.all([
+     sb.from('profiles').select('id,username,full_name,role,active').order('full_name'),
+     sb.from('courses').select('id,title,status,instructor_id'),
+     sb.from('course_enrolments').select('course_id,student_id'),
+     sb.from('quiz_attempts').select('id,student_id,module_id,score,max_score,submitted_at').order('submitted_at',{ascending:false}),
+     sb.from('student_progress').select('student_id,course_id,progress_percent,updated_at')
+   ]);
+   const teachers=(users||[]).filter(u=>u.role==='Teacher'), students=(users||[]).filter(u=>u.role==='Student');
+   const avg=(attempts||[]).length?Math.round((attempts||[]).reduce((a,x)=>a+(Number(x.max_score||0)?100*Number(x.score||0)/Number(x.max_score):0),0)/(attempts||[]).length):0;
+   document.getElementById('supervisionLive').innerHTML=`<div class=grid4>
+     <div class=card><div class=metric>${teachers.length}</div><p>Teachers</p></div>
+     <div class=card><div class=metric>${students.length}</div><p>Students</p></div>
+     <div class=card><div class=metric>${(courses||[]).length}</div><p>Courses</p></div>
+     <div class=card><div class=metric>${avg}%</div><p>Quiz average</p></div>
+   </div>
+   <div class=grid>
+     <div class=card><h3>Teachers under supervision</h3><div style="overflow:auto"><table><tr><th>Teacher</th><th>Username</th><th>Courses</th><th>Students</th><th>Status</th></tr>${teachers.map(t=>{const cs=(courses||[]).filter(c=>c.instructor_id===t.id);const ids=cs.map(c=>c.id);const n=new Set((enrolments||[]).filter(e=>ids.includes(e.course_id)).map(e=>e.student_id)).size;return `<tr><td>${escapeHtml(t.full_name)}</td><td>${escapeHtml(t.username)}</td><td>${cs.length}</td><td>${n}</td><td>${t.active?'Active':'Inactive'}</td></tr>`}).join('')||'<tr><td colspan=5>No teachers yet.</td></tr>'}</table></div></div>
+     <div class=card><h3>Students under direct oversight</h3><div style="overflow:auto"><table><tr><th>Student</th><th>Username</th><th>Courses</th><th>Progress</th><th>Status</th></tr>${students.map(st=>{const es=(enrolments||[]).filter(e=>e.student_id===st.id);const ps=(progress||[]).filter(x=>x.student_id===st.id);const pr=ps.length?Math.round(ps.reduce((a,x)=>a+Number(x.progress_percent||0),0)/ps.length):0;return `<tr><td>${escapeHtml(st.full_name)}</td><td>${escapeHtml(st.username)}</td><td>${es.length}</td><td>${pr}%</td><td>${st.active?'Active':'Inactive'}</td></tr>`}).join('')||'<tr><td colspan=5>No students yet.</td></tr>'}</table></div></div>
+   </div>
+   <div class=card><h3>Recent assessment activity</h3><div style="overflow:auto"><table><tr><th>Student</th><th>Score</th><th>Submitted</th></tr>${(attempts||[]).slice(0,10).map(a=>{const st=students.find(x=>x.id===a.student_id);const pct=Number(a.max_score)?Math.round(100*Number(a.score||0)/Number(a.max_score)):0;return `<tr><td>${escapeHtml(st?.full_name||'Student')}</td><td>${pct}%</td><td>${new Date(a.submitted_at).toLocaleString()}</td></tr>`}).join('')||'<tr><td colspan=3>No assessment attempts yet.</td></tr>'}</table></div></div>`;
+   return;
+ }
+ if(role==='Teacher'){
+   const {data:rows,error}=await sb.rpc('teacher_supervision_students',{p_teacher_id:currentUser.id});
+   if(error){
+     document.getElementById('main').innerHTML=`<div class=card><h2>Teacher Supervision Environment</h2><div class=dangerbox>Unable to load supervised students: ${escapeHtml(error.message)}</div></div>`;
+     return;
+   }
+   const supervised=rows||[];
+   const courseMap=new Map(supervised.map(r=>[r.course_id,r.course_title]));
+   const studentMap=new Map();
+   supervised.forEach(r=>studentMap.set(r.student_id,{name:r.student_name,username:r.student_username}));
+   const attempts=supervised.filter(r=>r.latest_score!==null);
+   const avg=attempts.length?Math.round(attempts.reduce((x,r)=>x+(Number(r.latest_max_score)?100*Number(r.latest_score||0)/Number(r.latest_max_score):0),0)/attempts.length):0;
+   document.getElementById('main').innerHTML=`<div class=card><div class=kpi><div><h2>Teacher Supervision Environment</h2><p class=muted>Live evidence from only the students enrolled in your assigned courses.</p></div><button class="btn alt" onclick="supervision()">↻ Refresh</button></div><div class=grid4><div class=card><div class=metric>${studentMap.size}</div><p>Students supervised</p></div><div class=card><div class=metric>${courseMap.size}</div><p>My courses</p></div><div class=card><div class=metric>${avg}%</div><p>Latest quiz average</p></div><div class=card><div class=metric>${attempts.length}</div><p>Students with assessment evidence</p></div></div><h3>Student progress</h3><div style="overflow:auto"><table><tr><th>Student</th><th>Username</th><th>Course</th><th>Progress</th><th>Latest quiz</th><th>Support</th><th></th></tr>${supervised.map(r=>{const pr=Number(r.progress_percent||0);const qp=r.latest_score!==null&&Number(r.latest_max_score)?Math.round(100*Number(r.latest_score||0)/Number(r.latest_max_score)):null;const support=(pr<50)||(qp!==null&&qp<50);return `<tr><td>${escapeHtml(r.student_name)}</td><td>${escapeHtml(r.student_username)}</td><td>${escapeHtml(r.course_title)}</td><td>${pr}%</td><td>${qp===null?'—':qp+'%'}</td><td><span class=status style="${support?'background:#fff0f0;color:#9b1c1c':''}">${support?'Needs support':'On track'}</span></td><td><button class="btn alt" onclick="studentEvidence('${r.student_id}')">Review</button></td></tr>`}).join('')||'<tr><td colspan=7>No enrolled students yet.</td></tr>'}</table></div><br><div class=notice><b>Supervision focus:</b> use low progress or low quiz performance as a prompt for targeted learner support, feedback and follow-up.</div></div>`;
+   return;
+ }
+ document.getElementById('main').innerHTML=`<div class=card><h2>My Learning Progress</h2><p class=muted>Your teacher uses learning evidence to support your progress.</p><div class=notice>Keep completing formative activities and check teacher feedback after each assessment.</div></div>`;
+}
+async function studentEvidence(studentId){
+ if(role!=='Teacher' && role!=='Administrator')return;
+ const main=document.getElementById('main');
+ main.innerHTML='<div class="card"><h2>Learner Evidence</h2><div class="notice">Loading learner evidence…</div></div>';
+ const [{data:student},{data:enrolments},{data:progress},{data:attempts}]=await Promise.all([
+   sb.from('profiles').select('id,full_name,username,institution,active').eq('id',studentId).single(),
+   sb.from('course_enrolments').select('course_id,enrolled_at').eq('student_id',studentId),
+   sb.from('student_progress').select('course_id,progress_percent,updated_at').eq('student_id',studentId),
+   sb.from('quiz_attempts').select('id,module_id,score,max_score,submitted_at').eq('student_id',studentId).order('submitted_at',{ascending:false}).limit(20)
+ ]);
+ if(!student){main.innerHTML='<div class="card"><div class="dangerbox">Learner record could not be loaded.</div></div>';return}
+ const courseIds=(enrolments||[]).map(x=>x.course_id);
+ const [{data:courses},{data:lessonProgress}]=await Promise.all([
+   courseIds.length?sb.from('courses').select('id,title').in('id',courseIds):Promise.resolve({data:[]}),
+   sb.from('lesson_progress').select('lesson_id,completed,completed_at').eq('student_id',studentId)
+ ]);
+ const courseMap=Object.fromEntries((courses||[]).map(c=>[c.id,c.title]));
+ const moduleIds=[...new Set((attempts||[]).map(a=>a.module_id).filter(Boolean))];
+ const {data:mods}=moduleIds.length?await sb.from('modules').select('id,title,course_id').in('id',moduleIds):{data:[]};
+ const moduleMap=Object.fromEntries((mods||[]).map(m=>[m.id,m.title]));
+ const avgProgress=(progress||[]).length?Math.round(progress.reduce((a,x)=>a+Number(x.progress_percent||0),0)/(progress||[]).length):0;
+ const scored=(attempts||[]).filter(a=>Number(a.max_score));
+ const quizAvg=scored.length?Math.round(scored.reduce((a,x)=>a+100*Number(x.score||0)/Number(x.max_score),0)/scored.length):0;
+ const completed=(lessonProgress||[]).filter(x=>x.completed).length;
+ main.innerHTML=`<div class="hero"><div class=kpi><div><span class="role-badge student">LEARNER EVIDENCE</span><h1>${escapeHtml(student.full_name||student.username)}</h1><p>${escapeHtml(student.username)}${student.institution?' • '+escapeHtml(student.institution):''}</p></div><button class="btn alt" onclick="supervision()">← Back to Supervision</button></div></div><div class=grid4><div class=card><div class=metric>${avgProgress}%</div><p>Average course progress</p></div><div class=card><div class=metric>${quizAvg}%</div><p>Quiz average</p></div><div class=card><div class=metric>${completed}</div><p>Completed lessons</p></div><div class=card><div class=metric>${(enrolments||[]).length}</div><p>Courses enrolled</p></div></div><div class=grid><div class=card><h3>Course progress</h3><div class=list>${(progress||[]).map(p=>`<div class=list-row><div class=grow><b>${escapeHtml(courseMap[p.course_id]||'Course')}</b><div class=progress style="margin-top:7px"><i style="width:${Number(p.progress_percent||0)}%"></i></div></div><span class=status>${Number(p.progress_percent||0)}%</span></div>`).join('')||'<div class=notice>No course progress recorded yet.</div>'}</div></div><div class=card><h3>Recent quiz attempts</h3><div class=list>${(attempts||[]).slice(0,8).map(a=>{const pct=Number(a.max_score)?Math.round(100*Number(a.score||0)/Number(a.max_score)):0;return `<div class=list-row><div class=grow><b>${escapeHtml(moduleMap[a.module_id]||'Assessment')}</b><div class=small muted>${new Date(a.submitted_at).toLocaleString()}</div></div><span class=status style="${pct<50?'background:#fff0f0;color:#9b1c1c':''}">${pct}%</span></div>`}).join('')||'<div class=notice>No quiz attempts recorded yet.</div>'}</div></div><div class=card><h3>Recommended support</h3><div class=notice>${avgProgress<50||quizAvg<50?'This learner has at least one low-evidence indicator. Review the lowest-performing course or assessment and plan a targeted follow-up.':'Current evidence is broadly on track. Continue formative feedback and monitor the next learning cycle.'}</div></div>`;
+}
+
+async function courses(){
+ const main=document.getElementById('main');
+ main.innerHTML='<div class="card"><h2>Courses</h2><div class="notice">Loading live course data…</div></div>';
+ let query=sb.from('courses').select('id,title,description,status,instructor_id,created_at').order('created_at',{ascending:false});
+ if(role==='Teacher') query=query.eq('instructor_id',currentUser.id);
+ const {data:courses,error}=await query;
+ if(error){main.innerHTML=`<div class="card"><h2>Courses</h2><div class="dangerbox">${escapeHtml(error.message)}</div></div>`;return}
+ const ids=(courses||[]).map(c=>c.id);
+ const [{data:modules},{data:enrolments},{data:teachers}]=await Promise.all([
+   ids.length?sb.from('modules').select('course_id').in('course_id',ids):Promise.resolve({data:[]}),
+   ids.length?sb.from('course_enrolments').select('course_id,student_id').in('course_id',ids):Promise.resolve({data:[]}),
+   role==='Administrator'?sb.from('profiles').select('id,full_name,username').eq('role','Teacher'):Promise.resolve({data:[]})
+ ]);
+ const teacherMap=Object.fromEntries((teachers||[]).map(t=>[t.id,t.full_name||t.username]));
+ main.innerHTML=`<div class="hero"><span class="badge">${role==='Teacher'?'INSTRUCTIONAL WORKSPACE':'COURSE MANAGEMENT'}</span><h1>${role==='Teacher'?'My Courses':'Courses & Instructors'}</h1><p>${role==='Teacher'?'Review your assigned courses, modules and learner enrolments.':'Create and oversee live courses, instructors and learner enrolments.'}</p>${role==='Administrator'?'<div class="quick"><button class="btn" onclick="show(\'management\')">Create / Assign Course</button><button class="btn alt" onclick="show(\'users\')">Manage Users</button></div>':''}</div>
+ <div class="grid">${(courses||[]).map(c=>{const m=(modules||[]).filter(x=>x.course_id===c.id).length;const n=new Set((enrolments||[]).filter(x=>x.course_id===c.id).map(x=>x.student_id)).size;return `<div class="card"><div class="kpi"><span class="badge">${escapeHtml(c.status)}</span><span class="small muted">${m} module${m===1?'':'s'}</span></div><h3>${escapeHtml(c.title)}</h3><p class="muted">${escapeHtml(c.description||'No description yet.')}</p>${role==='Administrator'?`<p class="small"><b>Instructor:</b> ${escapeHtml(teacherMap[c.instructor_id]||'Unassigned')}</p>`:''}<p class="small"><b>${n}</b> enrolled student${n===1?'':'s'}</p><div class="actions"><button class="btn alt" onclick="${role==='Student'?`openCourse('${c.id}')`:`courseBuilder('${c.id}')`}">${role==='Teacher'?'Open Builder':'View'}</button>${role==='Administrator'?`<button class="btn alt" onclick="show('management')">Manage</button>`:''}</div></div>`}).join('')||'<div class="notice">No courses are available for this workspace yet.</div>'}</div>`;
+}
+async function studentLearning(){
+  const main=document.getElementById('main');
+  main.innerHTML='<div class="card"><h2>🎓 My Learning Centre</h2><div class="notice">Loading your courses from the live LMS…</div></div>';
+  const {data:enrol,error}=await sb.from('course_enrolments').select('course_id').eq('student_id',currentUser.id);
+  if(error){main.innerHTML=`<div class="card"><h2>My Learning Centre</h2><div class="dangerbox">${escapeHtml(error.message)}</div></div>`;return}
+  const ids=(enrol||[]).map(x=>x.course_id);
+  if(!ids.length){main.innerHTML='<div class="card"><h2>My Learning Centre</h2><div class="notice">You are not enrolled in a course yet.</div></div>';return}
+  const {data:courses}=await sb.from('courses').select('id,title,description').in('id',ids).order('title');
+  const {data:progress}=await sb.from('student_progress').select('course_id,progress_percent').eq('student_id',currentUser.id).in('course_id',ids);
+  const pm=Object.fromEntries((progress||[]).map(x=>[x.course_id,x.progress_percent||0]));
+  main.innerHTML=`<section class="hero"><span class="role-badge student">STUDENT • LEARNING CENTRE</span><h1>Welcome, ${escapeHtml(profile?.full_name||'Learner')}.</h1><p>Learn through four modules, lesson content, embedded video, activities and formative quizzes.</p></section><div class="grid">${(courses||[]).map(c=>`<div class="card"><div class="resource-icon">📚</div><h3>${escapeHtml(c.title)}</h3><p>${escapeHtml(c.description||'Learner-centred course')}</p><div class="progress"><i style="width:${pm[c.id]||0}%"></i></div><p class="small">${pm[c.id]||0}% complete</p><button class="btn" onclick="openCourse('${c.id}')">Open Course</button></div>`).join('')}</div>`;
+}
+async function openCourse(courseId){
+  const main=document.getElementById('main');main.innerHTML='<div class="card"><h2>Loading course…</h2></div>';
+  const [{data:course},{data:mods}]=await Promise.all([
+    sb.from('courses').select('id,title,description').eq('id',courseId).single(),
+    sb.from('modules').select('id,title,description,position').eq('course_id',courseId).order('position')
+  ]);
+  if(!course){main.innerHTML='<div class="card"><div class="dangerbox">Course could not be loaded.</div></div>';return}
+  const {data:prog}=await sb.from('student_progress').select('progress_percent').eq('student_id',currentUser.id).eq('course_id',courseId).maybeSingle();
+  main.innerHTML=`<section class="hero"><span class="role-badge student">MY COURSE</span><h1>${escapeHtml(course.title)}</h1><p>${escapeHtml(course.description||'')}</p><div class="progress"><i style="width:${prog?.progress_percent||0}%"></i></div><p>${prog?.progress_percent||0}% course progress</p></section><div class="list" style="margin-top:18px">${(mods||[]).map((m,i)=>`<div class="card"><div class="kpi"><div><span class="badge">MODULE ${i+1}</span><h3>${escapeHtml(m.title)}</h3><p class="muted">${escapeHtml(m.description||'')}</p></div><button class="btn" onclick="openModule('${m.id}','${courseId}')">Start / Continue</button></div></div>`).join('')}</div><br><button class="btn alt" onclick="studentLearning()">← My Courses</button>`;
+}
+async function openModule(moduleId,courseId){
+  const main=document.getElementById('main');main.innerHTML='<div class="card"><h2>Loading module…</h2></div>';
+  window.__activeModuleId=moduleId;window.__activeCourseId=courseId;
+  const [{data:module},{data:lessons},{data:questions}]=await Promise.all([
+    sb.from('modules').select('id,title,description,position').eq('id',moduleId).single(),
+    sb.from('lessons').select('id,title,content,video_url,position').eq('module_id',moduleId).order('position'),
+    sb.from('quiz_questions').select('id,question,options,points,position').eq('module_id',moduleId).order('position')
+  ]);
+  const lessonList=lessons||[];
+  try{localStorage.setItem('isdlss_module_cache_'+moduleId,JSON.stringify({module,lessons:lessonList,questions:questions||[],cachedAt:new Date().toISOString()}))}catch{}
+  const lessonIds=lessonList.map(l=>l.id);
+  const {data:completedRows}=lessonIds.length?await sb.from('lesson_progress').select('lesson_id,completed').eq('student_id',currentUser.id).in('lesson_id',lessonIds):{data:[]};
+  const completed=new Set((completedRows||[]).filter(x=>x.completed).map(x=>x.lesson_id));
+  if(!module){main.innerHTML='<div class="card"><div class="dangerbox">Module could not be loaded.</div></div>';return}
+  const qs=questions||[];
+  const lessonHtml=lessonList.map((l,i)=>{const done=completed.has(l.id);const video=l.video_url?youtubeEmbed(l.video_url):'';return `<article class="card" style="margin:12px 0"><div class="kpi"><div><span class="badge">LESSON ${i+1}</span><h4>${escapeHtml(l.title||'Lesson')}</h4></div><span class="status">${done?'Completed':'Not completed'}</span></div><div class="lesson-content">${escapeHtml(l.content||'Lesson content will appear here.')}</div>${video}<button class="btn ${done?'alt':''}" onclick="toggleLessonComplete('${l.id}','${courseId}',${done?'false':'true'})">${done?'Mark as incomplete':'✓ Mark lesson complete'}</button></article>`}).join('')||'<div class="notice">No lessons have been published for this module yet.</div>';
+  main.innerHTML=`<div class="screen"><span class="badge">MODULE ${module.position||''}</span><h2>${escapeHtml(module.title)}</h2><p class="muted">${escapeHtml(module.description||'')}</p><div class="notice"><b>Module progress:</b> ${lessonList.length?Math.round(completed.size/lessonList.length*100):0}% of lessons completed.</div><hr><h3>📖 Lessons</h3>${lessonHtml}<div class="notice"><b>Learning activity:</b> Connect the lesson to a real-life example or local context, discuss with peers where appropriate, then complete the formative quiz.</div><h3 style="margin-top:22px">📝 Formative Quiz</h3><div id="moduleQuiz">${qs.map((q,i)=>`<div class="card"><p><b>${i+1}. ${escapeHtml(q.question)}</b></p><div class="choices">${optionList(q,i)}</div></div>`).join('')||'<div class="notice">No quiz questions have been published for this module yet.</div>'}</div>${qs.length?`<button class="btn" onclick="submitModuleQuiz('${moduleId}','${courseId}')">Submit Quiz</button>`:''}<div id="quizResult"></div><br><button class="btn alt" onclick="openCourse('${courseId}')">← Course Outline</button></div>`;
+  window.__moduleQuestions=qs;window.__activeModuleId=moduleId;window.__activeCourseId=courseId;restoreQuizDraft(moduleId,qs);
+}
+async function toggleLessonComplete(lessonId,courseId,completed){
+  const payload={student_id:currentUser.id,lesson_id:lessonId,completed,completed_at:completed?new Date().toISOString():null};
+  if(!navigator.onLine){
+    queueOfflineAction({type:'lesson_progress',payload});
+    const el=document.getElementById('quizResult');if(el)el.innerHTML='<div class="notice">Saved offline. This lesson will sync automatically when you reconnect.</div>';
+    return;
+  }
+  const result=await sb.from('lesson_progress').upsert(payload,{onConflict:'student_id,lesson_id'});
+  if(result.error){
+    queueOfflineAction({type:'lesson_progress',payload});
+    const el=document.getElementById('quizResult');if(el)el.innerHTML='<div class="notice">Connection unavailable. Saved offline and queued for sync.</div>';return;
+  }
+  await refreshStudentProgress(courseId);
+  await openCourseModuleAgain();
+}
+async function openCourseModuleAgain(){
+  const title=document.querySelector('.screen h2');
+  if(!title)return;
+  const badge=document.querySelector('.screen .badge');
+  const moduleId=window.__activeModuleId,courseId=window.__activeCourseId;
+  if(moduleId&&courseId)await openModule(moduleId,courseId);
+}
+function quizDraftKey(moduleId){return 'isdlss_quiz_draft_v1:'+currentUser.id+':'+moduleId}
+function readQuizDraft(moduleId){try{return JSON.parse(localStorage.getItem(quizDraftKey(moduleId))||'null')}catch{return null}}
+function saveQuizDraft(moduleId,answers){localStorage.setItem(quizDraftKey(moduleId),JSON.stringify({moduleId,userId:currentUser.id,answers,savedAt:new Date().toISOString()}));updateOfflineUi()}
+function clearQuizDraft(moduleId){localStorage.removeItem(quizDraftKey(moduleId));updateOfflineUi()}
+function optionList(q,i){let opts=Array.isArray(q.options)?q.options:(typeof q.options==='string'?JSON.parse(q.options):[]);return opts.map(o=>`<label class="choice"><input type="radio" name="q_${i}" value="${escapeAttr(String(o))}" onchange="rememberQuizDraft()"> ${escapeHtml(String(o))}</label>`).join('')}
+function rememberQuizDraft(){const qs=window.__moduleQuestions||[];const moduleId=window.__activeModuleId;if(!moduleId||!currentUser)return;const answers={};qs.forEach((q,i)=>{const el=document.querySelector(`input[name="q_${i}"]:checked`);if(el)answers[q.id]=el.value});if(Object.keys(answers).length)saveQuizDraft(moduleId,answers)}
+function restoreQuizDraft(moduleId,qs){const draft=readQuizDraft(moduleId);if(!draft||draft.userId!==currentUser.id||!draft.answers)return;qs.forEach((q,i)=>{const answer=draft.answers[q.id];if(answer){const el=document.querySelector(`input[name="q_${i}"][value="${escapeAttr(String(answer))}"]`);if(el)el.checked=true}});const r=document.getElementById('quizResult');if(r&&Object.keys(draft.answers).length)r.innerHTML='<div class="notice">Draft restored from this device. You can continue the quiz; nothing is submitted until you choose Submit Quiz.</div>'}
+function createClientSubmissionId(){
+  if(crypto?.randomUUID)return crypto.randomUUID();
+  return 'offline-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+}
+function calculateLocalQuizResult(qs,answers){ return {answered:Object.keys(answers).length,total:qs.length}; }
+async function submitQuizAttempt({moduleId,answers,clientSubmissionId}){
+  const payload={module_id:moduleId,student_id:currentUser.id,answers,client_submission_id:clientSubmissionId};
+  if(!navigator.onLine){queueOfflineAction({type:'quiz_attempt',payload,nextRetryAt:Date.now(),attempts:0});return {queued:true}}
+  const {data,error}=await sb.from('quiz_attempts').insert(payload).select('id,module_id,student_id,score,max_score,answers,submitted_at,client_submission_id').single();
+  if(!error)return {data};
+  const duplicate=error.code==='23505'||/duplicate|unique/i.test(error.message||'');
+  if(duplicate){
+    const {data:existing}=await sb.from('quiz_attempts').select('id,module_id,student_id,score,max_score,answers,submitted_at,client_submission_id').eq('client_submission_id',clientSubmissionId).maybeSingle();
+    return existing?{data:existing,duplicate:true}:{queued:true};
+  }
+  if(!navigator.onLine||/network|fetch|failed to fetch|timeout|offline/i.test(error.message||'')){queueOfflineAction({type:'quiz_attempt',payload,nextRetryAt:Date.now()+5000,attempts:0});return {queued:true}}
+  throw error;
+}
+async function submitModuleQuiz(moduleId,courseId){
+  const qs=window.__moduleQuestions||[];if(!qs.length)return;const answers={};
+  for(let i=0;i<qs.length;i++){const el=document.querySelector(`input[name="q_${i}"]:checked`);if(!el){rememberQuizDraft();document.getElementById('quizResult').innerHTML='<div class="dangerbox">Please answer every question before submitting. Your progress is saved on this device.</div>';return}answers[qs[i].id]=el.value}
+  const clientSubmissionId=createClientSubmissionId();
+  document.getElementById('quizResult').innerHTML='<div class="notice">'+(navigator.onLine?'Submitting securely…':'Offline: saving your attempt on this device…')+'</div>';
+  try{
+    const result=await submitQuizAttempt({moduleId,answers,clientSubmissionId});
+    if(result.queued){saveQuizDraft(moduleId,answers);document.getElementById('quizResult').innerHTML=`<div class="feedback"><b>Attempt saved offline.</b><br>Your answers are queued. The official score will be calculated by the server when synchronization succeeds. You can safely close the app.</div>`;return}
+    if(result.duplicate){clearQuizDraft(moduleId);document.getElementById('quizResult').innerHTML='<div class="feedback good"><b>Attempt already recorded.</b><br>This submission was safely deduplicated and the server result is authoritative.</div>';return}
+    clearQuizDraft(moduleId);const official=result.data;const pct=Number(official.max_score)?Math.round(100*Number(official.score||0)/Number(official.max_score)):0;
+    document.getElementById('quizResult').innerHTML=`<div class="feedback ${pct>=50?'good':'bad'}"><b>Score: ${official.score}/${official.max_score} (${pct}%)</b><br>${pct>=50?'Good work. Your server-verified result has been recorded.':'Review the lesson and retry with teacher guidance.'}</div>`;
+    await refreshStudentProgress(courseId);
+  }catch(error){saveQuizDraft(moduleId,answers);document.getElementById('quizResult').innerHTML=`<div class="dangerbox">${escapeHtml(error.message||'Unable to submit the quiz. Your answers were saved locally and can be resubmitted safely.')}</div>`}
+}
+async function refreshStudentProgress(courseId){
+  const {data:mods}=await sb.from('modules').select('id').eq('course_id',courseId);const ids=(mods||[]).map(x=>x.id);if(!ids.length)return;const {data:ls}=await sb.from('lessons').select('id').in('module_id',ids);const lessonIds=(ls||[]).map(x=>x.id);let done=0;if(lessonIds.length){const {data:lp}=await sb.from('lesson_progress').select('lesson_id').eq('student_id',currentUser.id).eq('completed',true).in('lesson_id',lessonIds);done=new Set((lp||[]).map(x=>x.lesson_id)).size}const pct=Math.round(done/lessonIds.length*100);const {data:existing}=await sb.from('student_progress').select('student_id').eq('student_id',currentUser.id).eq('course_id',courseId).maybeSingle();if(existing)await sb.from('student_progress').update({progress_percent:pct,updated_at:new Date().toISOString()}).eq('student_id',currentUser.id).eq('course_id',courseId);else await sb.from('student_progress').insert({student_id:currentUser.id,course_id:courseId,progress_percent:pct,updated_at:new Date().toISOString()});
+}
+function youtubeEmbed(url){try{const u=new URL(url);let id=u.searchParams.get('v');if(!id&&u.hostname.includes('youtu.be'))id=u.pathname.slice(1);if(!id)return '';return `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:14px;margin:16px 0"><iframe src="https://www.youtube.com/embed/${encodeURIComponent(id)}" title="YouTube learning video" style="position:absolute;inset:0;width:100%;height:100%;border:0" allowfullscreen></iframe></div>`}catch{return ''}}
+function escapeAttr(v){return escapeHtml(v)}
+
+async function assessment(){
+ const main=document.getElementById('main');
+ main.innerHTML='<div class="card"><h2>Assessment Centre</h2><div class="notice">Loading live assessment evidence…</div></div>';
+ let studentIds=[];
+ if(role==='Student') studentIds=[currentUser.id];
+ else if(role==='Teacher'){
+   const {data:rows,error}=await sb.rpc('teacher_supervision_students',{p_teacher_id:currentUser.id});
+   if(error){main.innerHTML=`<div class="card"><h2>Assessment Centre</h2><div class="dangerbox">${escapeHtml(error.message)}</div></div>`;return}
+   studentIds=[...new Set((rows||[]).map(r=>r.student_id))];
+ }else{
+   const {data:rows,error}=await sb.from('profiles').select('id').eq('role','Student');
+   if(error){main.innerHTML=`<div class="card"><h2>Assessment Centre</h2><div class="dangerbox">${escapeHtml(error.message)}</div></div>`;return}
+   studentIds=(rows||[]).map(r=>r.id);
+ }
+ const {data:attempts,error}=studentIds.length?await sb.from('quiz_attempts').select('id,student_id,module_id,score,max_score,answers,submitted_at').in('student_id',studentIds).order('submitted_at',{ascending:false}).limit(100):{data:[],error:null};
+ if(error){main.innerHTML=`<div class="card"><h2>Assessment Centre</h2><div class="dangerbox">${escapeHtml(error.message)}</div></div>`;return}
+ const attemptIds=(attempts||[]).map(a=>a.id);
+ const {data:feedbackRows}=attemptIds.length?await sb.from('assessment_feedback').select('id,attempt_id,reviewer_id,feedback,strengths,improvement_area,action_plan,updated_at').in('attempt_id',attemptIds):{data:[]};
+ const feedbackMap=Object.fromEntries((feedbackRows||[]).map(f=>[f.attempt_id,f]));
+ const moduleIds=[...new Set((attempts||[]).map(a=>a.module_id).filter(Boolean))];
+ const [{data:mods},{data:students}]=await Promise.all([
+   moduleIds.length?sb.from('modules').select('id,title,course_id').in('id',moduleIds):Promise.resolve({data:[]}),
+   role==='Student'?Promise.resolve({data:[]}):studentIds.length?sb.from('profiles').select('id,full_name,username').in('id',studentIds):Promise.resolve({data:[]})
+ ]);
+ const courseIds=[...new Set((mods||[]).map(m=>m.course_id).filter(Boolean))];
+ const {data:courses}=courseIds.length?await sb.from('courses').select('id,title').in('id',courseIds):{data:[]};
+ const moduleMap=Object.fromEntries((mods||[]).map(m=>[m.id,m]));
+ const courseMap=Object.fromEntries((courses||[]).map(c=>[c.id,c.title]));
+ const studentMap=Object.fromEntries((students||[]).map(st=>[st.id,st.full_name||st.username||'Student']));
+ const scored=(attempts||[]).filter(a=>Number(a.max_score)>0);
+ const avg=scored.length?Math.round(scored.reduce((sum,a)=>sum+(100*Number(a.score||0)/Number(a.max_score)),0)/scored.length):0;
+ const passed=scored.filter(a=>100*Number(a.score||0)/Number(a.max_score)>=50).length;
+ const passRate=scored.length?Math.round(100*passed/scored.length):0;
+ const support=new Set(scored.filter(a=>100*Number(a.score||0)/Number(a.max_score)<50).map(a=>a.student_id));
+ const title=role==='Student'?'My Assessment Results':role==='Teacher'?'Learner Assessment Results':'Institutional Assessment Results';
+ const rows=(attempts||[]).map(a=>{
+   const m=moduleMap[a.module_id], pct=Number(a.max_score)?Math.round(100*Number(a.score||0)/Number(a.max_score)):0, f=feedbackMap[a.id];
+   const feedbackState=f?'<span class="status">Feedback available</span>':'<span class="small muted">No feedback yet</span>';
+   return `<tr><td>${role==='Student'?'You':escapeHtml(studentMap[a.student_id]||'Student')}</td><td>${escapeHtml(m?.title||'Assessment')}</td><td>${escapeHtml(courseMap[m?.course_id]||'')}</td><td><span class="status" style="${pct<50?'background:#fff0f0;color:#9b1c1c':''}">${pct}%</span></td><td>${new Date(a.submitted_at).toLocaleString()}</td><td>${feedbackState}</td><td><button class="btn alt" onclick="assessmentDetail('${a.id}')">${role==='Student'?'View Feedback':'Review & Feedback'}</button></td></tr>`;
+ }).join('');
+ main.innerHTML=`<div class="hero"><span class="badge">LIVE ASSESSMENT</span><h1>${title}</h1><p>${role==='Student'?'Review your quiz history, teacher feedback and areas that need more practice.':'Use assessment evidence to identify learners who need feedback, reteaching or targeted support.'}</p></div><div class="grid4"><div class="card"><div class="metric">${attempts?.length||0}</div><p>Quiz attempts</p></div><div class="card"><div class="metric">${avg}%</div><p>Average score</p></div><div class="card"><div class="metric">${passRate}%</div><p>Pass rate</p></div><div class="card"><div class="metric">${role==='Student'?((attempts||[]).filter(a=>Number(a.max_score)>0&&100*Number(a.score||0)/Number(a.max_score)<50).length):support.size}</div><p>${role==='Student'?'Low scores':'Learners needing support'}</p></div></div><div class="card" style="margin-top:18px"><div class="kpi"><div><h2>Assessment history</h2><p class="muted">Results and feedback are read directly from the LMS database.</p></div>${role!=='Student'?'<button class="btn alt" onclick="exportAssessmentCsv()">Export CSV</button>':''}</div><div style="overflow:auto"><table><tr><th>Student</th><th>Module</th><th>Course</th><th>Score</th><th>Submitted</th><th>Feedback</th><th></th></tr>${rows||'<tr><td colspan="7"><div class="notice">No quiz attempts have been recorded yet.</div></td></tr>'}</table></div></div>`;
+ window.__assessmentRows=attempts||[];window.__assessmentMaps={moduleMap,courseMap,studentMap};
+}
+
+async function assessmentDetail(attemptId){
+ const main=document.getElementById('main');
+ main.innerHTML='<div class="card"><div class="notice">Loading assessment review…</div></div>';
+ const {data:attempt,error}=await sb.from('quiz_attempts').select('id,student_id,module_id,score,max_score,answers,submitted_at').eq('id',attemptId).single();
+ if(error||!attempt){main.innerHTML='<div class="card"><div class="dangerbox">Assessment attempt could not be loaded.</div></div>';return}
+ const [{data:module},{data:student},{data:feedback},{data:questions}]=await Promise.all([
+   sb.from('modules').select('id,title,course_id').eq('id',attempt.module_id).single(),
+   sb.from('profiles').select('id,full_name,username').eq('id',attempt.student_id).single(),
+   sb.from('assessment_feedback').select('id,reviewer_id,feedback,strengths,improvement_area,action_plan,updated_at').eq('attempt_id',attempt.id).maybeSingle(),
+   sb.from('quiz_questions').select('id,question,options,correct_answer,points,position').eq('module_id',attempt.module_id).order('position')
+ ]);
+ const pct=Number(attempt.max_score)?Math.round(100*Number(attempt.score||0)/Number(attempt.max_score)):0;
+ const answers=attempt.answers&&typeof attempt.answers==='object'?attempt.answers:{};
+ const answerRows=(questions||[]).map((q,i)=>{const selected=answers[q.id]??answers[String(q.id)]??'';const correct=String(selected)===String(q.correct_answer);return `<div class="card" style="margin-bottom:10px"><b>Q${i+1}. ${escapeHtml(q.question)}</b><div class="small muted" style="margin-top:7px">Selected: ${escapeHtml(String(selected)||'Not answered')} • Correct: ${escapeHtml(String(q.correct_answer||''))}</div><div class="status" style="margin-top:8px;${correct?'':'background:#fff0f0;color:#9b1c1c'}">${correct?'Correct':'Needs review'} • ${Number(q.points||1)} point${Number(q.points||1)===1?'':'s'}</div></div>`}).join('')||'<div class="notice">Question-level evidence is unavailable for this attempt.</div>';
+ const feedbackView=feedback?`<div class="card"><h3>Teacher feedback</h3><p>${escapeHtml(feedback.feedback||'')}</p>${feedback.strengths?`<p><b>Strengths:</b> ${escapeHtml(feedback.strengths)}</p>`:''}${feedback.improvement_area?`<p><b>Improvement area:</b> ${escapeHtml(feedback.improvement_area)}</p>`:''}${feedback.action_plan?`<div class="notice"><b>Action plan:</b> ${escapeHtml(feedback.action_plan)}</div>`:''}<p class="small muted">Updated ${new Date(feedback.updated_at).toLocaleString()}</p></div>`:'<div class="notice">No teacher feedback has been added yet.</div>';
+ const canReview=role==='Teacher'||role==='Administrator';
+ main.innerHTML=`<div class="hero"><div class="kpi"><div><span class="badge">ASSESSMENT REVIEW</span><h1>${escapeHtml(module?.title||'Assessment')}</h1><p>${role==='Student'?'Your submitted assessment':'Learner: '+escapeHtml(student?.full_name||student?.username||'Student')} • ${new Date(attempt.submitted_at).toLocaleString()}</p></div><span class="status" style="font-size:18px;${pct<50?'background:#fff0f0;color:#9b1c1c':''}">${pct}%</span></div></div><div class="grid"><div><div class="card"><h3>Assessment evidence</h3>${answerRows}</div></div><div><div class="card"><h3>Feedback</h3>${feedbackView}</div>${canReview?`<div class="card" style="margin-top:18px"><h3>${feedback?'Update':'Add'} teacher feedback</h3><p class="small muted">Give concise, actionable feedback the learner can use in the next learning cycle.</p><label>Overall feedback<textarea id="fb_feedback" rows="4">${escapeAttr(feedback?.feedback||'')}</textarea></label><label>Strengths<textarea id="fb_strengths" rows="3">${escapeAttr(feedback?.strengths||'')}</textarea></label><label>Improvement area<textarea id="fb_improvement" rows="3">${escapeAttr(feedback?.improvement_area||'')}</textarea></label><label>Action plan<textarea id="fb_action" rows="3">${escapeAttr(feedback?.action_plan||'')}</textarea></label><button class="btn" onclick="saveAssessmentFeedback('${attempt.id}')">Save Feedback</button><div id="feedbackResult" style="margin-top:10px"></div></div>`:''}</div></div><br><button class="btn alt" onclick="assessment()">← Back to Assessment Centre</button>`;
+}
+
+async function saveAssessmentFeedback(attemptId){
+ const result=document.getElementById('feedbackResult');
+ const payload={attempt_id:attemptId,reviewer_id:currentUser.id,feedback:document.getElementById('fb_feedback').value.trim(),strengths:document.getElementById('fb_strengths').value.trim()||null,improvement_area:document.getElementById('fb_improvement').value.trim()||null,action_plan:document.getElementById('fb_action').value.trim()||null,updated_at:new Date().toISOString()};
+ if(!payload.feedback){result.innerHTML='<div class="dangerbox">Please add overall feedback before saving.</div>';return}
+ result.innerHTML='<div class="notice">Saving feedback…</div>';
+ const {data:existing}=await sb.from('assessment_feedback').select('id').eq('attempt_id',attemptId).maybeSingle();
+ const response=existing?await sb.from('assessment_feedback').update(payload).eq('id',existing.id):await sb.from('assessment_feedback').insert(payload);
+ if(response.error){result.innerHTML=`<div class="dangerbox">${escapeHtml(response.error.message)}</div>`;return}
+ const {data:attemptOwner}=await sb.from('quiz_attempts').select('student_id,module_id').eq('id',attemptId).single();
+ if(!existing && attemptOwner?.student_id){
+   await sb.from('notifications').insert({user_id:attemptOwner.student_id,type:'assessment_feedback',title:'New teacher feedback',message:'Your assessment has been reviewed. Open it to read your feedback and action plan.',entity_id:attemptId});
+ }
+ result.innerHTML='<div class="feedback good"><b>Feedback saved.</b> The learner has been notified and can now see it in the Assessment Centre.</div>';
+ refreshNotificationBadge();
+ setTimeout(()=>assessmentDetail(attemptId),500);
+}
+
+function exportAssessmentCsv(){
+ const rows=window.__assessmentRows||[],maps=window.__assessmentMaps||{};
+ const csv=[['Student','Module','Course','Score Percent','Submitted At'],...rows.map(a=>{const m=maps.moduleMap?.[a.module_id];const pct=Number(a.max_score)?Math.round(100*Number(a.score||0)/Number(a.max_score)):0;return [maps.studentMap?.[a.student_id]||'Student',m?.title||'Assessment',maps.courseMap?.[m?.course_id]||'',pct+'%',new Date(a.submitted_at).toISOString()]} )].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='is-dlss-assessment-results.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function notifications(el){
+ document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active')); if(el)el.classList.add('active');
+ const main=document.getElementById('main'); main.innerHTML='<div class="card"><h2>Notification Inbox</h2><div class="notice">Loading your activity…</div></div>';
+ const {data:rows,error}=await sb.from('notifications').select('id,type,title,message,entity_id,read_at,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(50);
+ if(error){main.innerHTML=`<div class="card"><h2>Notification Inbox</h2><div class="dangerbox">${escapeHtml(error.message)}</div></div>`;return}
+ const unread=(rows||[]).filter(n=>!n.read_at).length;
+ const badge=document.getElementById('notifBadge'); if(badge){badge.textContent=unread;badge.style.display=unread?'inline-block':'none'}
+ main.innerHTML=`<div class="hero"><span class="badge">ACTIVITY & FEEDBACK</span><h1>Your Inbox</h1><p>Assessment reviews, teacher feedback and important learning activity appear here.</p></div><div class="card"><div class="kpi"><div><h2>Recent notifications</h2><p class="muted">${unread} unread</p></div>${unread?'<button class="btn alt" onclick="markAllNotificationsRead()">Mark all read</button>':''}</div><div class="list">${(rows||[]).map(n=>`<div class="list-row" style="align-items:flex-start;${n.read_at?'':'background:#f7fbf8;border-left:4px solid var(--g)'}"><div class="grow"><b>${escapeHtml(n.title)}</b><div style="margin-top:5px">${escapeHtml(n.message)}</div><div class="small muted" style="margin-top:6px">${new Date(n.created_at).toLocaleString()}</div></div><div>${!n.read_at?`<button class="btn alt" onclick="markNotificationRead('${n.id}')">Mark read</button>`:''}${n.entity_id&&n.type==='assessment_feedback'?`<button class="btn" style="margin-left:6px" onclick="assessmentDetail('${n.entity_id}')">Open</button>`:''}</div></div>`).join('')||'<div class="notice">You have no notifications yet.</div>'}</div></div>`;
+}
+async function markNotificationRead(id){await sb.from('notifications').update({read_at:new Date().toISOString()}).eq('id',id).eq('user_id',currentUser.id);notifications();}
+async function markAllNotificationsRead(){await sb.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',currentUser.id).is('read_at',null);notifications();}
+async function refreshNotificationBadge(){
+ if(!currentUser)return; const {count}=await sb.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',currentUser.id).is('read_at',null); const b=document.getElementById('notifBadge'); if(b){b.textContent=count||0;b.style.display=count?'inline-block':'none'}
+}
+
+async function refreshLiveSurface(reason='update'){
+ if(!currentUser || liveRefreshBusy)return;
+ liveRefreshBusy=true;
+ try{
+   await refreshNotificationBadge();
+   if(currentView==='dashboard') await dashboard();
+   else if(currentView==='analytics') await analytics();
+   else if(currentView==='assessment') await assessment();
+   else if(currentView==='notifications') await notifications();
+   else if(currentView==='supervision' && role!=='Student') await supervision();
+ }finally{liveRefreshBusy=false;}
+}
+function startLiveUpdates(){
+ if(!currentUser || liveChannel)return;
+ const relevant=['notifications','quiz_attempts','lesson_progress','student_progress','assessment_feedback'];
+ liveChannel=sb.channel('isd-lms-live-'+currentUser.id);
+ relevant.forEach(table=>{
+   liveChannel.on('postgres_changes',{event:'*',schema:'public',table},payload=>{
+     if(table==='notifications' && payload?.new?.user_id && payload.new.user_id!==currentUser.id && payload?.old?.user_id!==currentUser.id)return;
+     refreshLiveSurface(table);
+   });
+ });
+ liveChannel.subscribe(status=>{if(status==='SUBSCRIBED')refreshNotificationBadge();});
+ clearInterval(liveRefreshTimer);
+ liveRefreshTimer=setInterval(()=>refreshLiveSurface('poll'),30000);
+}
+function stopLiveUpdates(){
+ if(liveChannel){sb.removeChannel(liveChannel);liveChannel=null;}
+ clearInterval(liveRefreshTimer);liveRefreshTimer=null;
+}
+
+function resourceLibrary(){document.getElementById('main').innerHTML=`<div class=hero><span class=badge>TEACHER SUPPORT & LEARNER-CENTRED TOOLKIT</span><h1>Practical resources for better learning.</h1><p>Job aids, guides, templates and assessment tools designed for day-to-day instructional practice.</p></div><div class=grid4>${resources.map((r,i)=>`<div class="card resource"><div class=resource-icon>${r[1]}</div><h3>${r[0]}</h3><div class=small><b>${r[2]}</b></div><p>${r[3]}</p><button class="btn alt" onclick="downloadResource(${i})">Open Resource</button></div>`).join('')}</div>`}
+function downloadResource(i){const r=resources[i];const text=`IS-DLSS TEACHER SUPPORT RESOURCE\\n\\n${r[0]}\\n${r[2]}\\n\\n${r[3]}\\n\\nUse this practical job aid as part of lesson planning, facilitation, assessment or professional reflection.`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));a.download=r[0].replace(/[^a-z0-9]+/gi,'_')+'.txt';a.click()}
+async function analytics(){
+ const main=document.getElementById('main');main.innerHTML='<div class="card"><h2>Learning Analytics</h2><div class="notice">Calculating live indicators…</div></div>';
+ let studentIds=[];
+ if(role==='Student') studentIds=[currentUser.id];
+ else if(role==='Teacher'){
+   const {data:rows}=await sb.rpc('teacher_supervision_students',{p_teacher_id:currentUser.id});
+   studentIds=[...new Set((rows||[]).map(r=>r.student_id))];
+ }else{
+   const {data:rows}=await sb.from('profiles').select('id').eq('role','Student');studentIds=(rows||[]).map(r=>r.id);
+ }
+ const [{data:progress},{data:attempts},{data:enrolments}]=await Promise.all([
+   studentIds.length?sb.from('student_progress').select('student_id,course_id,progress_percent,updated_at').in('student_id',studentIds):Promise.resolve({data:[]}),
+   studentIds.length?sb.from('quiz_attempts').select('student_id,score,max_score,submitted_at').in('student_id',studentIds).order('submitted_at',{ascending:false}):Promise.resolve({data:[]}),
+   studentIds.length?sb.from('course_enrolments').select('student_id,course_id').in('student_id',studentIds):Promise.resolve({data:[]})
+ ]);
+ const progressAvg=progress?.length?Math.round(progress.reduce((a,x)=>a+Number(x.progress_percent||0),0)/progress.length):0;
+ const quizPct=attempts?.length?Math.round(attempts.reduce((a,x)=>a+(Number(x.max_score||0)?100*Number(x.score||0)/Number(x.max_score):0),0)/attempts.length):0;
+ const support=new Set(progress.filter(x=>Number(x.progress_percent||0)<50).map(x=>x.student_id));
+ (attempts||[]).forEach(x=>{if(Number(x.max_score)&&100*Number(x.score||0)/Number(x.max_score)<50)support.add(x.student_id)});
+ main.innerHTML=`<div class="hero"><span class="badge">LIVE LEARNING ANALYTICS</span><h1>${role==='Administrator'?'Institutional':'Role-aware'} performance view</h1><p>Indicators are calculated from current course progress, enrolments and quiz evidence available to your account.</p></div><div class="grid4"><div class="card"><div class="metric">${progressAvg}%</div><p>Average progress</p></div><div class="card"><div class="metric">${quizPct}%</div><p>Quiz average</p></div><div class="card"><div class="metric">${enrolments.length}</div><p>Course enrolments</p></div><div class="card"><div class="metric">${support.size}</div><p>Support flags</p></div></div><div class="grid"><div class="card"><h3>Indicator interpretation</h3><div class="list"><div class="list-row">Course progress <span class="status">${progressAvg>=70?'On track':'Needs attention'}</span></div><div class="list-row">Assessment performance <span class="status">${quizPct>=70?'On track':'Needs attention'}</span></div><div class="list-row">Learner support <span class="status">${support.size?'Follow-up required':'No flags'}</span></div></div></div><div class="card"><h3>Latest evidence</h3>${(attempts||[]).slice(0,8).map(a=>`<div class="list-row"><span>${new Date(a.submitted_at).toLocaleString()}</span><span class="status">${Number(a.max_score)?Math.round(100*Number(a.score||0)/Number(a.max_score)):0}%</span></div>`).join('')||'<div class="notice">No quiz attempts recorded yet.</div>'}</div></div>`;
+}
+async function forum(){
+ const main=document.getElementById('main');main.innerHTML='<div class="card"><h2>Discussion Forum</h2><div class="notice">Loading live discussions…</div></div>';
+ const {data:posts,error}=await sb.from('discussion_posts').select('id,author_id,course_id,body,created_at,profiles:author_id(full_name,username,role)').order('created_at',{ascending:false}).limit(30);
+ if(error){main.innerHTML=`<div class="card"><h2>Discussion Forum</h2><div class="dangerbox">${escapeHtml(error.message)}</div></div>`;return}
+ main.innerHTML=`<div class="forum"><div class="card"><h2>Discussion Forum</h2><p class="muted">Share questions, strategies and evidence with the learning community.</p><form id="postForm"><textarea id="postBody" required maxlength="2000" placeholder="Start a constructive learning discussion…"></textarea><br><button class="btn" type="submit">Post Discussion</button></form><div id="postMsg"></div><hr><div class="list">${(posts||[]).map(p=>`<article class="post"><div class="kpi"><b>${escapeHtml(p.profiles?.full_name||p.profiles?.username||'LMS user')}</b><span class="small muted">${new Date(p.created_at).toLocaleString()}</span></div><p>${escapeHtml(p.body)}</p><span class="role-badge ${String(p.profiles?.role||'Student').toLowerCase()}">${escapeHtml(p.profiles?.role||'Student')}</span></article>`).join('')||'<div class="notice">No discussions yet. Start the first one.</div>'}</div></div><div class="card"><h3>Community guidelines</h3><div class="notice">Be constructive, evidence-informed and respectful. Protect learner privacy and avoid posting sensitive personal information.</div></div></div>`;
+ document.getElementById('postForm').onsubmit=async e=>{e.preventDefault();const msg=document.getElementById('postMsg');msg.innerHTML='<div class="notice">Publishing…</div>';const {error}=await sb.from('discussion_posts').insert({author_id:currentUser.id,body:document.getElementById('postBody').value.trim()});if(error)msg.innerHTML=`<div class="dangerbox">${escapeHtml(error.message)}</div>`;else await forum()};
+}
+
+async function videos(){
+ const main=document.getElementById('main');main.innerHTML='<div class="card"><h2>Video Learning</h2><div class="notice">Loading the video library…</div></div>';
+ const {data:rows,error}=await sb.from('video_resources').select('id,title,youtube_id,description,course_id,created_at').order('created_at',{ascending:false});
+ if(error){main.innerHTML=`<div class="card"><h2>Video Learning</h2><div class="dangerbox">${escapeHtml(error.message)}</div></div>`;return}
+ const fallback=[['Formative Assessment in Science','YPKSOkkSZuY','Teacher CPD video on using formative assessment in science lessons.'],['Practical Work in Science','lM-_9KgCA98','Purposeful practical work: enquiry, hands-on learning and reflection.']];
+ const list=(rows&&rows.length)?rows.map(v=>[v.title,v.youtube_id,v.description||'']).slice(0,12):fallback;
+ main.innerHTML=`<div class="hero"><span class="badge">VIDEO LEARNING</span><h1>Science Teaching Video Hub</h1><p>Curated learning videos for formative assessment, scientific inquiry and practical work.</p></div><div class="grid">${list.map(v=>`<div class="card"><h3>${escapeHtml(v[0])}</h3><p class="muted">${escapeHtml(v[2])}</p><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px"><iframe src="https://www.youtube.com/embed/${encodeURIComponent(v[1])}" title="${escapeAttr(v[0])}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allowfullscreen loading="lazy"></iframe></div></div>`).join('')}</div>${role==='Administrator'?'<div class="notice" style="margin-top:18px">Video resources can be added through the video_resources table or an administrator form in the next management slice.</div>':''}`;
+}
+
+async function users(){
+ if(role!=='Administrator')return;
+ document.getElementById('main').innerHTML=`<div class="card">
+ <h2>Users, Roles & Permissions</h2>
+ <p class="muted">Create real LMS accounts and manage the supervision structure.</p>
+ <div class="grid">
+  <div class="card"><h3>Create account</h3>
+   <form id="createUserForm">
+    <label>Full name</label><input id="newFullName" required placeholder="e.g. Ama Mensah">
+    <label>Username</label><input id="newUsername" required placeholder="e.g. ama.teacher" autocomplete="username">
+    <label>Email</label><input id="newEmail" type="email" required placeholder="name@example.com" autocomplete="email">
+    <label>Role</label><select id="newRole"><option>Teacher</option><option>Student</option><option>Administrator</option></select>
+    <label>Temporary password</label><input id="newPassword" type="password" required minlength="8" placeholder="8+ chars, letters, numbers & symbol">
+    <small class="muted">Password must contain at least 8 characters, a letter, a number and a special character.</small>
+    <label>Institution (optional)</label><input id="newInstitution" placeholder="School / institution">
+    <button class="primary" type="submit">Create secure account</button>
+   </form>
+   <div id="createUserMessage"></div>
+  </div>
+  <div class="card"><h3>Current users</h3><div id="userLive">Loading live users…</div></div>
+ </div></div>`;
+ await renderLiveUsers();
+ document.getElementById('createUserForm').addEventListener('submit',createLmsUser);
+}
+async function renderLiveUsers(){
+ const root=document.getElementById('userLive'); if(!root)return;
+ const {data,error}=await sb.from('profiles').select('id,username,full_name,role,active,created_at').order('created_at',{ascending:false});
+ if(error){root.innerHTML=`<div class=login-error>${escapeHtml(error.message)}</div>`;return}
+ root.innerHTML=data?.length?`<div style="overflow:auto"><table><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Joined</th></tr>${data.map(u=>`<tr><td><b>${escapeHtml(u.full_name||'—')}</b></td><td>${escapeHtml(u.username||'—')}</td><td><span class="role-badge ${String(u.role).toLowerCase()}">${escapeHtml(u.role)}</span></td><td>${u.active?'Active':'Inactive'}</td><td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`).join('')}</table></div>`:'<div class="notice">No users have been created yet.</div>';
+}
+async function createLmsUser(ev){
+ ev.preventDefault();
+ const msg=document.getElementById('createUserMessage');
+ const password=document.getElementById('newPassword').value;
+ if(!validPassword(password)){msg.innerHTML='<div class=login-error>Password must be at least 8 characters and contain letters, numbers and a special character.</div>';return}
+ const {data:{session}}=await sb.auth.getSession();
+ if(!session){msg.innerHTML='<div class=login-error>Your Administrator session has expired. Please sign in again.</div>';return}
+ msg.innerHTML='<div class=notice>Creating secure account…</div>';
+ try{
+   const res=await fetch(gatewayUrl(),{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({
+     action:'create_user',
+     email:document.getElementById('newEmail').value.trim(),
+     username:document.getElementById('newUsername').value.trim(),
+     full_name:document.getElementById('newFullName').value.trim(),
+     role:document.getElementById('newRole').value,
+     password,
+     institution:document.getElementById('newInstitution').value.trim()
+   })});
+   const data=await res.json();
+   if(!res.ok)throw new Error(data.error||'Unable to create account');
+   msg.innerHTML=`<div class=notice><b>Account created successfully.</b><br>${escapeHtml(data.profile.full_name)} is now a ${escapeHtml(data.profile.role)}.</div>`;
+   document.getElementById('createUserForm').reset();
+   await renderLiveUsers();
+ }catch(e){msg.innerHTML=`<div class=login-error>${escapeHtml(e.message||'Unable to create account')}</div>`}
+}
+
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+
+async function courseBuilder(courseId){
+ if(role!=='Administrator' && role!=='Teacher')return;
+ const main=document.getElementById('main'); main.innerHTML='<div class="card"><h2>Course Builder</h2><div class="notice">Loading course structure…</div></div>';
+ const {data:course,error}=await sb.from('courses').select('id,title,description,instructor_id,status').eq('id',courseId).single();
+ if(error||!course){main.innerHTML='<div class="card"><div class="dangerbox">Course could not be loaded.</div></div>';return}
+ if(role==='Teacher'&&course.instructor_id!==currentUser.id){main.innerHTML='<div class="card"><div class="dangerbox">You can only edit courses assigned to you.</div></div>';return}
+ const {data:mods, error:modError}=await sb.from('modules').select('id,title,description,position').eq('course_id',courseId).order('position');
+ if(modError){main.innerHTML=`<div class="card"><div class="dangerbox">${escapeHtml(modError.message)}</div></div>`;return}
+ main.innerHTML=`<div class="hero"><span class="badge">CONTENT AUTHORING</span><h1>${escapeHtml(course.title)}</h1><p>${escapeHtml(course.description||'Build modules, lessons, videos and formative quiz questions from one workspace.')}</p><div class="quick"><button class="btn alt" onclick="show('courses')">← Courses</button><button class="btn" onclick="addModuleForm('${courseId}')">+ Add Module</button></div></div><div id="builderArea" style="margin-top:18px"></div>`;
+ await renderBuilderModules(courseId,mods||[]);
+}
+async function renderBuilderModules(courseId,mods){
+ const root=document.getElementById('builderArea');if(!root)return;
+ if(!mods.length){root.innerHTML='<div class="card"><div class="notice"><b>No modules yet.</b> Add the first module to start building this course.</div></div>';return}
+ const html=[];
+ for(const m of mods){
+  const [{data:lessons},{data:questions}]=await Promise.all([
+   sb.from('lessons').select('id,title,video_url,position').eq('module_id',m.id).order('position'),
+   sb.from('quiz_questions').select('id,question,points,position').eq('module_id',m.id).order('position')
+  ]);
+  html.push(`<div class="card" style="margin-bottom:16px"><div class="kpi"><div><span class="badge">MODULE ${m.position||''}</span><h2 style="margin:7px 0">${escapeHtml(m.title)}</h2><p class="muted">${escapeHtml(m.description||'')}</p></div><div class="actions"><button class="btn alt" onclick="editModule('${m.id}','${courseId}')">Edit</button><button class="btn danger" onclick="deleteModule('${m.id}','${courseId}')">Delete</button></div></div><div class="grid"><div class="card"><h3>📖 Lessons</h3>${(lessons||[]).map(l=>`<div class="list-row"><div class="grow"><b>${escapeHtml(l.title)}</b><div class="small muted">Position ${l.position||1}${l.video_url?' • video attached':''}</div></div><button class="btn alt" onclick="editLesson('${l.id}','${courseId}')">Edit</button><button class="btn danger" onclick="deleteLesson('${l.id}','${courseId}')">Delete</button></div>`).join('')||'<div class="notice">No lessons yet.</div>'}<br><button class="btn" onclick="addLessonForm('${m.id}','${courseId}')">+ Add Lesson</button></div><div class="card"><h3>📝 Quiz Questions</h3>${(questions||[]).map(q=>`<div class="list-row"><div class="grow"><b>${escapeHtml(q.question)}</b><div class="small muted">${Number(q.points||1)} point${Number(q.points||1)===1?'':'s'}</div></div><button class="btn alt" onclick="editQuestion('${q.id}','${courseId}')">Edit</button><button class="btn danger" onclick="deleteQuestion('${q.id}','${courseId}')">Delete</button></div>`).join('')||'<div class="notice">No quiz questions yet.</div>'}<br><button class="btn" onclick="addQuestionForm('${m.id}','${courseId}')">+ Add Question</button></div></div></div>`);
+ }
+ root.innerHTML=html.join('');
+}
+function builderForm(title,body){document.getElementById('builderArea').insertAdjacentHTML('afterbegin',`<div class="card" id="builderFormCard"><div class="kpi"><h2>${title}</h2><button class="btn alt" onclick="document.getElementById('builderFormCard')?.remove()">Close</button></div>${body}</div>`);document.getElementById('builderFormCard').scrollIntoView({behavior:'smooth',block:'start'})}
+async function reloadBuilder(courseId){const {data:mods}=await sb.from('modules').select('id,title,description,position').eq('course_id',courseId).order('position');await renderBuilderModules(courseId,mods||[])}
+function addModuleForm(courseId){builderForm('Add Module',`<form onsubmit="saveModule(event,'${courseId}')"><label>Module title</label><input id="bfTitle" required placeholder="e.g. Matter and its Properties"><label>Description</label><textarea id="bfDesc"></textarea><label>Position</label><input id="bfPosition" type="number" min="1" value="1" required><br><button class="btn">Save Module</button></form>`)}
+async function saveModule(e,courseId){e.preventDefault();const {error}=await sb.from('modules').insert({course_id:courseId,title:document.getElementById('bfTitle').value.trim(),description:document.getElementById('bfDesc').value.trim()||null,position:Number(document.getElementById('bfPosition').value)});if(error){alert(error.message);return}document.getElementById('builderFormCard')?.remove();await reloadBuilder(courseId)}
+async function editModule(id,courseId){const {data:m}=await sb.from('modules').select('id,title,description,position').eq('id',id).single();if(!m)return;builderForm('Edit Module',`<form onsubmit="updateModule(event,'${id}','${courseId}')"><label>Module title</label><input id="bfTitle" required value="${escapeAttr(m.title)}"><label>Description</label><textarea id="bfDesc">${escapeHtml(m.description||'')}</textarea><label>Position</label><input id="bfPosition" type="number" min="1" value="${m.position||1}" required><br><button class="btn">Save Changes</button></form>`)}
+async function updateModule(e,id,courseId){e.preventDefault();const {error}=await sb.from('modules').update({title:document.getElementById('bfTitle').value.trim(),description:document.getElementById('bfDesc').value.trim()||null,position:Number(document.getElementById('bfPosition').value)}).eq('id',id);if(error){alert(error.message);return}document.getElementById('builderFormCard')?.remove();await reloadBuilder(courseId)}
+async function deleteModule(id,courseId){if(!confirm('Delete this module and its lessons/questions?'))return;const {error}=await sb.from('modules').delete().eq('id',id);if(error){alert(error.message);return}await reloadBuilder(courseId)}
+function addLessonForm(moduleId,courseId){builderForm('Add Lesson',`<form onsubmit="saveLesson(event,'${moduleId}','${courseId}')"><label>Lesson title</label><input id="bfTitle" required><label>Lesson content</label><textarea id="bfContent" required></textarea><label>Video URL (optional)</label><input id="bfVideo" placeholder="https://www.youtube.com/watch?v=..."><label>Position</label><input id="bfPosition" type="number" min="1" value="1" required><br><button class="btn">Save Lesson</button></form>`)}
+async function saveLesson(e,moduleId,courseId){e.preventDefault();const {error}=await sb.from('lessons').insert({module_id:moduleId,title:document.getElementById('bfTitle').value.trim(),content:document.getElementById('bfContent').value.trim(),video_url:document.getElementById('bfVideo').value.trim()||null,position:Number(document.getElementById('bfPosition').value)});if(error){alert(error.message);return}document.getElementById('builderFormCard')?.remove();await reloadBuilder(courseId)}
+async function editLesson(id,courseId){const {data:l}=await sb.from('lessons').select('id,title,content,video_url,position').eq('id',id).single();if(!l)return;builderForm('Edit Lesson',`<form onsubmit="updateLesson(event,'${id}','${courseId}')"><label>Lesson title</label><input id="bfTitle" required value="${escapeAttr(l.title)}"><label>Lesson content</label><textarea id="bfContent" required>${escapeHtml(l.content||'')}</textarea><label>Video URL</label><input id="bfVideo" value="${escapeAttr(l.video_url||'')}"><label>Position</label><input id="bfPosition" type="number" min="1" value="${l.position||1}" required><br><button class="btn">Save Changes</button></form>`)}
+async function updateLesson(e,id,courseId){e.preventDefault();const {error}=await sb.from('lessons').update({title:document.getElementById('bfTitle').value.trim(),content:document.getElementById('bfContent').value.trim(),video_url:document.getElementById('bfVideo').value.trim()||null,position:Number(document.getElementById('bfPosition').value)}).eq('id',id);if(error){alert(error.message);return}document.getElementById('builderFormCard')?.remove();await reloadBuilder(courseId)}
+async function deleteLesson(id,courseId){if(!confirm('Delete this lesson?'))return;const {error}=await sb.from('lessons').delete().eq('id',id);if(error){alert(error.message);return}await reloadBuilder(courseId)}
+function addQuestionForm(moduleId,courseId){builderForm('Add Quiz Question',`<form onsubmit="saveQuestion(event,'${moduleId}','${courseId}')"><label>Question</label><textarea id="bfQuestion" required></textarea><label>Options (one per line)</label><textarea id="bfOptions" required placeholder="Option A\nOption B\nOption C\nOption D"></textarea><label>Correct answer</label><input id="bfCorrect" required placeholder="Exact option text"><label>Points</label><input id="bfPoints" type="number" min="0.1" step="0.1" value="1" required><label>Position</label><input id="bfPosition" type="number" min="1" value="1" required><br><button class="btn">Save Question</button></form>`)}
+async function saveQuestion(e,moduleId,courseId){e.preventDefault();const opts=document.getElementById('bfOptions').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);const correct=document.getElementById('bfCorrect').value.trim();if(!opts.includes(correct)){alert('Correct answer must exactly match one of the options.');return}const {error}=await sb.from('quiz_questions').insert({module_id:moduleId,question:document.getElementById('bfQuestion').value.trim(),options:opts,correct_answer:correct,points:Number(document.getElementById('bfPoints').value),position:Number(document.getElementById('bfPosition').value)});if(error){alert(error.message);return}document.getElementById('builderFormCard')?.remove();await reloadBuilder(courseId)}
+async function editQuestion(id,courseId){const {data:q}=await sb.from('quiz_questions').select('id,question,options,correct_answer,points,position').eq('id',id).single();if(!q)return;const opts=Array.isArray(q.options)?q.options:[];builderForm('Edit Quiz Question',`<form onsubmit="updateQuestion(event,'${id}','${courseId}')"><label>Question</label><textarea id="bfQuestion" required>${escapeHtml(q.question)}</textarea><label>Options (one per line)</label><textarea id="bfOptions" required>${escapeHtml(opts.join('\n'))}</textarea><label>Correct answer</label><input id="bfCorrect" required value="${escapeAttr(q.correct_answer)}"><label>Points</label><input id="bfPoints" type="number" min="0.1" step="0.1" value="${q.points||1}" required><label>Position</label><input id="bfPosition" type="number" min="1" value="${q.position||1}" required><br><button class="btn">Save Changes</button></form>`)}
+async function updateQuestion(e,id,courseId){e.preventDefault();const opts=document.getElementById('bfOptions').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);const correct=document.getElementById('bfCorrect').value.trim();if(!opts.includes(correct)){alert('Correct answer must exactly match one of the options.');return}const {error}=await sb.from('quiz_questions').update({question:document.getElementById('bfQuestion').value.trim(),options:opts,correct_answer:correct,points:Number(document.getElementById('bfPoints').value),position:Number(document.getElementById('bfPosition').value)}).eq('id',id);if(error){alert(error.message);return}document.getElementById('builderFormCard')?.remove();await reloadBuilder(courseId)}
+async function deleteQuestion(id,courseId){if(!confirm('Delete this quiz question?'))return;const {error}=await sb.from('quiz_questions').delete().eq('id',id);if(error){alert(error.message);return}await reloadBuilder(courseId)}
+async function management(){
+ if(role!=='Administrator' && role!=='Teacher'){return}
+ document.getElementById('main').innerHTML=`<div class=card><h2>Course & Supervision Management</h2><p class=muted>Live courses, teacher assignments and student enrolments.</p>
+ <div class=grid>
+  <div class=card><h3>Create course</h3><form id=courseForm>
+   <label>Course title</label><input id=courseTitle required placeholder="e.g. Integrated Science">
+   <label>Description</label><textarea id=courseDescription placeholder="Course description"></textarea>
+   <label>Teacher</label><select id=courseTeacher required><option value="">Loading teachers…</option></select>
+   <button class=primary>Create course</button></form><div id=courseMsg></div></div>
+  <div class=card><h3>Enrol student</h3><form id=enrolForm>
+   <label>Course</label><select id=enrolCourse required><option value="">Loading courses…</option></select>
+   <label>Student</label><select id=enrolStudent required><option value="">Loading students…</option></select>
+   <button class=primary>Enrol student</button></form><div id=enrolMsg></div></div>
+ </div>
+ <div id=managementLive>Loading live management data…</div></div>`;
+
+ const [{data:teachers},{data:students},{data:courses}]=await Promise.all([
+   sb.from('profiles').select('id,full_name,username').eq('role','Teacher').eq('active',true).order('full_name'),
+   sb.from('profiles').select('id,full_name,username').eq('role','Student').eq('active',true).order('full_name'),
+   sb.from('courses').select('id,title,instructor_id,status').order('created_at',{ascending:false})
+ ]);
+ const tSel=document.getElementById('courseTeacher');
+ tSel.innerHTML='<option value="">Select teacher</option>'+(teachers||[]).map(t=>`<option value="${t.id}">${escapeHtml(t.full_name||t.username)}</option>`).join('');
+ const cSel=document.getElementById('enrolCourse');
+ cSel.innerHTML='<option value="">Select course</option>'+(courses||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+ const sSel=document.getElementById('enrolStudent');
+ sSel.innerHTML='<option value="">Select student</option>'+(students||[]).map(st=>`<option value="${st.id}">${escapeHtml(st.full_name||st.username)}</option>`).join('');
+
+ document.getElementById('courseForm').onsubmit=async e=>{
+   e.preventDefault(); const msg=document.getElementById('courseMsg');msg.innerHTML='<div class=notice>Creating course…</div>';
+   const {error}=await sb.from('courses').insert({title:document.getElementById('courseTitle').value.trim(),description:document.getElementById('courseDescription').value.trim(),instructor_id:tSel.value,status:'Active'});
+   if(error)msg.innerHTML=`<div class=login-error>${escapeHtml(error.message)}</div>`;else{msg.innerHTML='<div class=notice>Course created and teacher assigned.</div>';e.target.reset();await management()}
+ };
+ document.getElementById('enrolForm').onsubmit=async e=>{
+   e.preventDefault();const msg=document.getElementById('enrolMsg');msg.innerHTML='<div class=notice>Enrolling student…</div>';
+   const {error}=await sb.from('course_enrolments').insert({course_id:cSel.value,student_id:sSel.value});
+   if(error)msg.innerHTML=`<div class=login-error>${escapeHtml(error.message)}</div>`;else{msg.innerHTML='<div class=notice>Student enrolled successfully.</div>';e.target.reset();await management()}
+ };
+
+ const {data:enrol}=await sb.from('course_enrolments').select('course_id,student_id,enrolled_at');
+ const teacherMap=Object.fromEntries((teachers||[]).map(x=>[x.id,x.full_name||x.username]));
+ const studentMap=Object.fromEntries((students||[]).map(x=>[x.id,x.full_name||x.username]));
+ document.getElementById('managementLive').innerHTML=`<h3>Live supervision structure</h3><div style="overflow:auto"><table><tr><th>Course</th><th>Teacher</th><th>Enrolled students</th></tr>${(courses||[]).map(c=>{const es=(enrol||[]).filter(e=>e.course_id===c.id);return `<tr><td><b>${escapeHtml(c.title)}</b></td><td>${escapeHtml(teacherMap[c.instructor_id]||'Unassigned')}</td><td>${es.length?es.map(e=>escapeHtml(studentMap[e.student_id]||'Student')).join(', '):'No students yet'}</td></tr>`}).join('')||'<tr><td colspan=3>No courses yet.</td></tr>'}</table></div>`;
+}
+function about(){document.getElementById('main').innerHTML=`<div class=card><h2>About IS-DLSS</h2><p><b>Integrated Science Digital Learning Support System</b> is a role-based academic LMS prototype for learner-centred Integrated Science instruction and teacher CPD.</p><div class=notice><b>Supervision model:</b><br>Administrator → supervises Teachers → supervise Students<br><span class=small>Administrator also retains direct monitoring access to Students.</span></div><br><p class=muted>This prototype demonstrates the requested navigation, role identities, supervision areas, management functions, assessment evidence, analytics and practical teacher-support toolkit. Production deployment would still require SME review, accessibility, authentication/authorisation, secure data storage, backend APIs, audit logging, pilot testing and evaluation.</p></div>`}
+function courseStart(){show('courses');setTimeout(()=>openScreen(state.screen),30)}
+function openScreen(n){state.screen=Math.max(1,Math.min(13,n));save();renderScreen()}
+function next(){state.screen=Math.min(13,state.screen+1);save();renderScreen()}
+function renderScreen(){let s=screens[state.screen-1],b='';if(s[2]==='orientation')b=`<p>${s[1]}</p><button class=btn onclick=next()>BEGIN</button>`;if(s[2]==='objective')b=`<div class=feedback><b>${s[1]}</b></div><button class=btn onclick=next()>NEXT</button>`;if(s[2]==='poll')b=`<div class=choices><button class=choice onclick="document.getElementById('fb').innerHTML='<div class=feedback>Good. Let us examine the instructional evidence.</div><button class=btn onclick=next()>CONTINUE</button>'">TRUE</button><button class=choice onclick="document.getElementById('fb').innerHTML='<div class=feedback>Good. Let us examine the instructional evidence.</div><button class=btn onclick=next()>CONTINUE</button>'">FALSE</button></div><div id=fb></div>`;if(s[2]==='content')b=`<p>${s[1]}</p><div class=feedback><b>Design response:</b> strengthen learner-centred practice rather than relying on technology alone.</div><button class=btn onclick=next()>NEXT</button>`;if(s[2]==='cards')b=`<div class=grid>${['Dictation dominates','Recall-only questions','Students rarely handle materials','Understanding is not checked','Feedback is delayed','Few students participate'].map((x,i)=>`<div class=card onclick="this.innerHTML='<b>Sign ${i+1}</b><p>${x}</p>'"><b>Sign ${i+1}</b><p>Tap to reveal</p></div>`).join('')}</div><br><button class=btn onclick=next()>NEXT</button>`;if(s[2]==='scenario')b=`<p>${s[1]}</p><div class=choices><button class=choice onclick="branch('A')">A. Skip materials, dictate definitions and move on.</button><button class=choice onclick="branch('B')">B. Demonstrate the colour change herself, then move on.</button><button class=choice onclick="branch('C')">C. Let groups test substances, then use a two-minute exit ticket and immediate feedback.</button></div>`;if(s[2]==='branch')b=`<div class=feedback>${state.branch||'Choose a response on the scenario screen.'}</div><button class=btn onclick=next()>CONTINUE</button>`;if(s[2]==='debrief')b=`<div class=grid><div class=card><b>1. Practical / Inquiry</b><p>Students do something with the concept.</p></div><div class=card><b>2. Formative Check</b><p>Teacher checks understanding.</p></div><div class=card><b>3. Immediate Feedback</b><p>Misconceptions are addressed promptly.</p></div></div><button class=btn onclick=next()>NEXT</button>`;if(s[2]==='quiz')b=`<div id=quiz><p><b>1.</b> Demonstration alone fully satisfies the recommended sequence.</p><button class=choice onclick="ans(1,false,this)">True</button> <button class=choice onclick="ans(1,true,this)">False</button><p><b>2.</b> Which combination is recommended?</p><button class=choice onclick="ans(2,true,this)">Practical/inquiry + formative check + feedback</button> <button class=choice onclick="ans(2,false,this)">Longer lecture</button><p><b>3.</b> With limited equipment, what is recommended?</p><button class=choice onclick="ans(3,true,this)">Low-cost practical + quick formative check</button> <button class=choice onclick="ans(3,false,this)">Skip practical work</button><div id=qf></div><br><button class=btn onclick=finishQuiz()>SUBMIT</button></div>`;if(s[2]==='reflection')b=`<p>${s[1]}</p><textarea id=ref>${state.reflection}</textarea><br><button class=btn onclick="state.reflection=document.getElementById('ref').value;save();next()">SAVE & NEXT</button>`;if(s[2]==='summary')b=`<ul><li>Practical activity is required.</li><li>Pair activity with formative checking and immediate feedback.</li><li>Use locally available materials when resources are limited.</li></ul><button class=btn onclick=next()>NEXT</button>`;if(s[2]==='completion')b=`<div class=feedback><b>Module Complete.</b></div><p>Use the learner-centred lesson checklist in your next lesson.</p><button class=btn onclick="downloadResource(0)">DOWNLOAD JOB AID</button>`;document.getElementById('main').innerHTML=`<div class=screen><span class=badge>Screen ${state.screen}/13</span><h2>${s[0]}</h2>${b}<br><button class="btn alt" onclick="show('courses')">Course Outline</button></div>`}
+let answers={};function ans(n,c,e){answers[n]=c;e.classList.add('selected');document.getElementById('qf').innerHTML=Object.keys(answers).length===3?'<div class=feedback>All items answered. Submit when ready.</div>':''}
+function finishQuiz(){state.score=Object.values(answers).filter(Boolean).length;state.passed=state.score>=2;save();document.getElementById('qf').innerHTML=`<div class="feedback ${state.passed?'good':'bad'}">Score: ${state.score}/3 — ${state.passed?'Passed':'Review the module and retry'}.</div><button class=btn onclick=next()>CONTINUE</button>`}
+function branch(v){state.branch=v==='C'?'Correct: groups test materials, complete an exit ticket and receive immediate feedback.':v==='B'?'Partial: demonstration helps, but students do not handle materials and there is no formative check.':'Incorrect: students do not practise applying the concept and understanding is not checked.';state.screen=8;save();renderScreen()}
+
+
+const SUPABASE_URL='https://mnypxpwcfydyqeiyigom.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_i_o3Rk-7ry1yRBxdWu67Dw_iW4SdTIE';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let role='Student', profile=null, currentUser=null;
+
+function validPassword(p){return p.length>=8 && /[A-Za-z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p)}
+function gatewayUrl(){return SUPABASE_URL+'/functions/v1/auth-gateway'}
+
+async function login(){
+ const selected=document.getElementById('loginRole').value;
+ const identifier=document.getElementById('loginUsername').value.trim();
+ const password=document.getElementById('loginPassword').value;
+ const msg=document.getElementById('loginMessage');
+ if(!identifier||!password){msg.innerHTML='<div class=login-error>Enter your username/email and password.</div>';return}
+ msg.innerHTML='<div class=notice>Signing you in securely…</div>';
+ try{
+   const res=await fetch(gatewayUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',identifier,password})});
+   const data=await res.json();
+   if(!res.ok) throw new Error(data.error||'Login failed');
+   if(!data.profile) throw new Error('Your account profile is not configured yet.');
+   if(data.profile.role!==selected) throw new Error('The selected role does not match this account.');
+   const {error}=await sb.auth.setSession(data.session);
+   if(error) throw error;
+   currentUser=data.user; profile=data.profile; role=profile.role;
+   document.getElementById('loginOverlay').style.display='none';
+   applyRole();
+   await dashboard();
+ }catch(e){msg.innerHTML='<div class=login-error>'+String(e.message||'Login failed')+'</div>'}
+}
+
+async function forgotPassword(){
+ const identifier=document.getElementById('loginUsername').value.trim();
+ const msg=document.getElementById('loginMessage');
+ if(!identifier){msg.innerHTML='<div class=login-error>Enter your username or email first.</div>';return}
+ msg.innerHTML='<div class=notice>Requesting a secure password-reset email…</div>';
+ try{
+   const redirectTo=window.location.href.split('#')[0];
+   await fetch(gatewayUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'reset',identifier,redirectTo})});
+   msg.innerHTML='<div class=notice><b>If the account exists, a password-reset email has been requested.</b><br>Check the registered inbox and follow the secure link.</div>';
+ }catch(e){msg.innerHTML='<div class=login-error>Unable to request password recovery right now.</div>'}
+}
+
+function togglePassword(){const i=document.getElementById('loginPassword'),b=document.querySelector('.password-wrap button');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide'}
+
+async function logout(){
+ await sb.auth.signOut();
+ currentUser=null; profile=null; role='Student';
+ document.getElementById('loginOverlay').style.display='grid';
+ document.getElementById('loginPassword').value='';
+ document.getElementById('loginMessage').innerHTML='';
+}
+
+async function loadProfile(){
+ const {data:{user}}=await sb.auth.getUser();
+ if(!user)return false;
+ currentUser=user;
+ const {data,error}=await sb.from('profiles').select('*').eq('id',user.id).single();
+ if(error||!data)return false;
+ profile=data;role=data.role;applyRole();return true;
+}
+
+async function liveStats(){
+ if(!currentUser)return null;
+ const out={};
+ const {count:courseCount}=await sb.from('courses').select('*',{count:'exact',head:true});
+ out.courses=courseCount||0;
+ if(role==='Administrator'){
+   const {count:teachers}=await sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','Teacher');
+   const {count:students}=await sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','Student');
+   const {count:assessments}=await sb.from('assessment_attempts').select('*',{count:'exact',head:true});
+   out.teachers=teachers||0;out.students=students||0;out.assessments=assessments||0;
+ }else if(role==='Teacher'){
+   const {data:myCourses}=await sb.from('courses').select('id').eq('instructor_id',currentUser.id);
+   const ids=(myCourses||[]).map(x=>x.id);
+   if(ids.length){
+     const {data:enrol}=await sb.from('course_enrolments').select('student_id').in('course_id',ids);
+     out.students=new Set((enrol||[]).map(x=>x.student_id)).size;
+   }else out.students=0;
+ }else{
+   const {count:enrolled}=await sb.from('course_enrolments').select('*',{count:'exact',head:true}).eq('student_id',currentUser.id);
+   out.enrolled=enrolled||0;
+ }
+ return out;
+}
+
+async function hydrateConnection(){
+ const bar=document.getElementById('connectionStatus');
+ if(!bar)return;
+ const stats=await liveStats();
+ if(stats) bar.innerHTML='<span class=live-dot></span>Connected to live IS-DLSS database • '+(profile?.full_name||currentUser?.email||'User');
+ refreshNotificationBadge();
+}
+
+const OFFLINE_QUEUE_KEY='isdlss_offline_queue_v2';
+let offlineSyncRunning=false;
+function readOfflineQueue(){try{return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY)||'[]')}catch{return []}}
+function queueOfflineAction(action){const q=readOfflineQueue();const key=action.type==='quiz_attempt'?action.payload.client_submission_id:(action.type+'|'+action.payload.student_id+'|'+action.payload.lesson_id);if(q.some(x=>(x.type==='quiz_attempt'?x.payload.client_submission_id:(x.type+'|'+x.payload.student_id+'|'+x.payload.lesson_id))===key))return; q.push({...action,queuedAt:new Date().toISOString(),attempts:action.attempts||0,nextRetryAt:action.nextRetryAt||Date.now()});localStorage.setItem(OFFLINE_QUEUE_KEY,JSON.stringify(q));updateOfflineUi()}
+function writeOfflineQueue(q){localStorage.setItem(OFFLINE_QUEUE_KEY,JSON.stringify(q));updateOfflineUi()}
+function queueWaitLabel(){const q=readOfflineQueue();if(!q.length)return 'All offline work is synchronized.';return `${q.length} action(s) waiting to sync.`}
+async function syncOfflineQueue(){
+  if(!navigator.onLine||!currentUser||offlineSyncRunning)return {synced:0,remaining:readOfflineQueue().length};
+  offlineSyncRunning=true;let q=readOfflineQueue();let synced=0;const now=Date.now();
+  try{
+    const remaining=[];
+    for(const item of q){
+      if((item.nextRetryAt||0)>now){remaining.push(item);continue}
+      if(item.type==='lesson_progress'){
+        const {error}=await sb.from('lesson_progress').upsert(item.payload,{onConflict:'student_id,lesson_id'});
+        if(error)remaining.push({...item,attempts:(item.attempts||0)+1,nextRetryAt:Date.now()+Math.min(300000,5000*Math.pow(2,item.attempts||0))});else synced++;
+      }else if(item.type==='quiz_attempt'){
+        const {data,error}=await sb.from('quiz_attempts').insert(item.payload).select('id').maybeSingle();
+        const duplicate=error?.code==='23505'||/duplicate|unique/i.test(error?.message||'');
+        if(!error||duplicate){synced++;if(item.payload.module_id)clearQuizDraft(item.payload.module_id)}
+        else remaining.push({...item,attempts:(item.attempts||0)+1,nextRetryAt:Date.now()+Math.min(300000,5000*Math.pow(2,item.attempts||0))});
+      }else remaining.push(item);
+    }
+    writeOfflineQueue(remaining);
+    return {synced,remaining:remaining.length};
+  }finally{offlineSyncRunning=false;updateOfflineUi()}
+}
+function updateOfflineUi(){
+  const banner=document.getElementById('offlineBanner');const q=readOfflineQueue();
+  if(banner){banner.style.display=(navigator.onLine&&q.length===0)?'none':'block';banner.innerHTML=navigator.onLine?`<b>Sync status:</b> ${escapeHtml(queueWaitLabel())} ${q.length?'<button class="btn alt" style="float:right;padding:4px 8px" onclick="manualSyncOffline()">Sync now</button>':''}`:`<b>Offline mode:</b> cached learning content is available. ${q.length} action(s) are queued safely on this device.`}
+  const bar=document.getElementById('connectionStatus');if(bar){bar.classList.toggle('offline',!navigator.onLine||q.length>0);if(navigator.onLine)bar.innerHTML='<span class="live-dot"></span>Online • '+(q.length?`${q.length} pending sync`:'All changes synced');else bar.innerHTML='Offline • '+q.length+' action(s) waiting to sync'}
+}
+async function manualSyncOffline(){const r=await syncOfflineQueue();if(currentUser)await dashboard();alert(r.remaining?`${r.synced} action(s) synced; ${r.remaining} remain queued.`:`${r.synced} action(s) synchronized successfully.`)}
+async function installPwa(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;const b=document.getElementById('installBanner');if(b)b.style.display='none'}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;const b=document.getElementById('installBanner');if(b)b.style.display='block'});
+window.addEventListener('online',async()=>{updateOfflineUi();await syncOfflineQueue();if(currentUser){await refreshLiveSurface('reconnected');await dashboard()}});
+window.addEventListener('offline',updateOfflineUi);
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+
+async function handleRecoverySession(){
+ const {data:{session}}=await sb.auth.getSession();
+ if(session){
+   const url=new URL(window.location.href);
+   if(url.hash.includes('type=recovery') || window.location.hash.includes('access_token')){
+     const p=prompt('Enter your new password (8+ characters, letters, numbers and a special character):');
+     if(p && validPassword(p)){
+       const {error}=await sb.auth.updateUser({password:p});
+       if(error) alert(error.message); else alert('Password updated successfully. Please sign in again.');
+       await sb.auth.signOut();
+     }
+   }
+ }
+}
+
+function closeMobileNav(){
+  if(window.innerWidth<=900) document.querySelector('.layout')?.classList.remove('open');
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('aside .nav')) setTimeout(closeMobileNav,80);
+});
+
+(async function boot(){
+ updateOfflineUi();
+ await handleRecoverySession();
+ const ok=await loadProfile();
+ if(ok){
+   document.getElementById('loginOverlay').style.display='none';
+   startLiveUpdates();
+   await dashboard();
+ }else{
+   document.getElementById('loginOverlay').style.display='grid';
+ }
+ sb.auth.onAuthStateChange(async (_event,session)=>{
+   if(session && !currentUser){await loadProfile();document.getElementById('loginOverlay').style.display='none';startLiveUpdates();await dashboard()}
+   if(!session){stopLiveUpdates();currentUser=null;profile=null;document.getElementById('loginOverlay').style.display='grid'}
+ });
+})();
+</script>
+</body>
+</html>

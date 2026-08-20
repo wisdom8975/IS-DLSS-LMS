@@ -1,0 +1,10 @@
+{
+  "name": "IS-DLSS Professional LMS",
+  "short_name": "IS-DLSS LMS",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f8f7",
+  "theme_color": "#075c3a",
+  "description": "Integrated Science Digital Learning Support System",
+  "icons": []
+}
