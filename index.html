@@ -318,10 +318,13 @@ async function openCourse(courseId){
 async function openModule(moduleId,courseId){
   const main=document.getElementById('main');main.innerHTML='<div class="card"><h2>Loading module…</h2></div>';
   window.__activeModuleId=moduleId;window.__activeCourseId=courseId;
+  const questionRequest=role==='Student'
+    ? sb.rpc('student_quiz_questions',{p_module_id:moduleId})
+    : sb.from('quiz_questions').select('id,question,options,points,position').eq('module_id',moduleId).order('position');
   const [{data:module},{data:lessons},{data:questions}]=await Promise.all([
     sb.from('modules').select('id,title,description,position').eq('id',moduleId).single(),
     sb.from('lessons').select('id,title,content,video_url,position').eq('module_id',moduleId).order('position'),
-    sb.from('quiz_questions').select('id,question,options,points,position').eq('module_id',moduleId).order('position')
+    questionRequest
   ]);
   const lessonList=lessons||[];
   try{localStorage.setItem('isdlss_module_cache_'+moduleId,JSON.stringify({module,lessons:lessonList,questions:questions||[],cachedAt:new Date().toISOString()}))}catch{}
