@@ -1,4 +1,4 @@
-const CACHE='isdlss-v20260821-7';
+const CACHE='isdlss-v20260821-8';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./formative-assessment.js','./assessment-loader.js','./lesson-formative.js'];
 self.addEventListener('install',event=>{
   self.skipWaiting();
@@ -16,8 +16,8 @@ self.addEventListener('fetch',event=>{
     event.respondWith(fetch(req,{cache:'no-store'}).then(async response=>{
       const text=await response.clone().text();
       let injected=text;
-      if(!injected.includes('lesson-formative.js?v=20260821-7')){
-        injected=injected.replace('</head>','<script src="formative-assessment.js?v=20260821-7" defer data-direct-formative-assessment></script><script src="lesson-formative.js?v=20260821-7" defer data-lesson-formative></script></head>');
+      if(!injected.includes('lesson-formative.js?v=20260821-8')){
+        injected=injected.replace('</head>','<script src="formative-assessment.js?v=20260821-8" defer data-direct-formative-assessment></script><script src="lesson-formative.js?v=20260821-8" defer data-lesson-formative></script></head>');
       }
       const headers=new Headers(response.headers);headers.set('content-type','text/html; charset=utf-8');
       return new Response(injected,{status:response.status,statusText:response.statusText,headers});
