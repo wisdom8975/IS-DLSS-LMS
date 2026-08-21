@@ -46,10 +46,11 @@ begin
   insert into public.lesson_formative_attempts(lesson_id,student_id,answers,score,max_score,completed_at,updated_at)
   values(p_lesson_id,auth.uid(),coalesce(p_answers,'{}'::jsonb),v_score,v_max,now(),now())
   on conflict(student_id,lesson_id) do update set answers=excluded.answers,score=excluded.score,max_score=excluded.max_score,completed_at=excluded.completed_at,updated_at=now()
-  returning id,completed_at into v_attempt_id,v_completed_at;
+  returning lesson_formative_attempts.id,lesson_formative_attempts.completed_at into v_attempt_id,v_completed_at;
   return query select v_attempt_id,v_score,v_max,v_completed_at;
 end;
 $$;
+revoke all on function public.submit_lesson_formative(uuid,jsonb) from public, anon;
 grant execute on function public.submit_lesson_formative(uuid,jsonb) to authenticated;
 
 update public.lessons
