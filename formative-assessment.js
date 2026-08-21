@@ -1,158 +1,134 @@
+// Interactive formative assessment module for IS-DLSS.
+// This file is intentionally self-contained so the student portal can load it
+// reliably even when the main HTML has cached/older inline assessment markup.
 (function(){
   'use strict';
 
-  const HEADING='𝗙𝗢𝗥𝗠𝗔𝗧𝗜𝗩𝗘 𝗔𝗦𝗦𝗘𝗦𝗦𝗠𝗘𝗡𝗧';
-  const STUDY='𝗦𝗧𝗨𝗗𝗬 𝗖𝗛𝗘𝗖𝗞';
-  let busy=false;
-
-  const css=`
-    .fa-box{margin:22px 0;padding:18px;border:1px solid #dfe7e2;border-radius:16px;background:#fff;box-shadow:0 8px 24px rgba(23,49,42,.07)}
-    .fa-title{margin:0 0 6px;color:#17312a;font-size:20px;font-weight:850}
-    .fa-subtitle{margin:0 0 16px;color:#65746e;font-size:13px}
-    .fa-question{padding:15px;margin:12px 0;border:1px solid #dfe7e2;border-radius:13px;background:#fbfdfc}
-    .fa-question.done{border-color:#9ed8b7;background:#f2fbf5}
-    .fa-qtext{font-weight:800;margin-bottom:10px;line-height:1.55}
-    .fa-options{display:grid;gap:8px}
-    .fa-option{display:flex;align-items:flex-start;gap:9px;padding:11px 12px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;cursor:pointer;font-size:14px;line-height:1.4}
-    .fa-option:hover{border-color:#075c3a;background:#f3f8f5}
-    .fa-option input{margin-top:3px;accent-color:#075c3a}
-    .fa-option.selected{border:2px solid #075c3a;background:#eaf6ef}
-    .fa-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
-    .fa-submit{background:#075c3a;color:#fff;border:0;padding:12px 16px;border-radius:10px;font-weight:850;cursor:pointer;width:100%}
-    .fa-submit:disabled{opacity:.55;cursor:not-allowed}
-    .fa-result{margin-top:13px;padding:13px;border-radius:11px;font-weight:750}
-    .fa-good{background:#e9f8ee;color:#166534;border:1px solid #bfe7cc}
-    .fa-warn{background:#fff8e8;color:#805400;border:1px solid #f5e3ae}
-    .fa-review{margin-top:10px;padding:10px;border-radius:9px;background:#fff;border:1px solid #dfe7e2;font-weight:500}
-    .fa-review.correct{border-color:#bfe7cc;background:#f3fbf5}
-    .fa-review.wrong{border-color:#f2c4ca;background:#fff5f6}
-    @media(max-width:600px){.fa-box{padding:14px}.fa-option{font-size:13px;padding:11px}.fa-title{font-size:18px}}
-  `;
-
-  function addStyles(){
-    if(document.getElementById('formativeAssessmentStyles'))return;
-    const s=document.createElement('style');s.id='formativeAssessmentStyles';s.textContent=css;document.head.appendChild(s);
+  function escapeHtml(v){
+    return String(v ?? '').replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c];});
   }
 
-  function clean(v){return String(v||'').replace(/[𝗔-𝗭𝗮-𝘇]/g,'').replace(/\s+/g,' ').trim().toLowerCase().replace(/[?!.:]+$/,'');}
-
-  function parseAssessment(raw){
-    const text=String(raw||'').replace(/\u00a0/g,' ');
-    const start=text.indexOf(HEADING);
-    if(start<0)return null;
-    const end=text.indexOf(STUDY,start);
-    const block=(end>start?text.slice(start+HEADING.length,end):text.slice(start+HEADING.length));
-    const normalized=block.replace(/\s+/g,' ').trim();
-    const matches=[];
-    const re=/(\d+)\.\s*(.*?)\s*A\.\s*(.*?)\s*B\.\s*(.*?)\s*C\.\s*(.*?)\s*D\.\s*(.*?)(?=\s+\d+\.\s*|$)/g;
-    let m;
-    while((m=re.exec(normalized))!==null){
-      matches.push({n:Number(m[1]),question:m[2].trim(),options:[m[3].trim(),m[4].trim(),m[5].trim(),m[6].trim()]});
-    }
-    return {start,end,endIndex:end>start?end:text.length,questions:matches};
+  function getAssessmentHost(){
+    return document.querySelector('#moduleQuiz') || document.querySelector('[data-formative-assessment]');
   }
 
-  async function loadQuestionKeys(moduleId,questions){
-    const client=(typeof sb!=='undefined')?sb:null;
-    if(!client||!moduleId)return questions;
-    try{
-      const {data,error}=await client.from('quiz_questions').select('id,module_id,question,options,correct_answer,position').eq('module_id',moduleId).order('position');
-      if(error||!data)return questions;
-      return questions.map(q=>{
-        const found=data.find(x=>clean(x.question)===clean(q.question));
-        if(!found)return q;
-        const opts=Array.isArray(found.options)?found.options:(found.options||{});
-        const optionValues=Object.values(opts);
-        const correctValue=opts[found.correct_answer]||found.correct_answer;
-        return {...q,id:found.id,correct:found.correct_answer,correctValue,dbOptions:optionValues.length===4?optionValues:null};
+  function getQuestions(){
+    return [
+      {q:'Which organ produces sperm cells?', options:['Prostate gland','Testis','Ureter','Bladder'], answer:1, explanation:'The testes contain seminiferous tubules where sperm production occurs.'},
+      {q:'Gametes are normally:', options:['Diploid','Triploid','Haploid','Tetraploid'], answer:2, explanation:'Gametes are haploid so that fertilisation restores the diploid chromosome number.'},
+      {q:'Where does spermatogenesis mainly occur?', options:['Seminiferous tubules','Uterus','Cervix','Oviduct'], answer:0, explanation:'Spermatogenesis takes place in the seminiferous tubules of the testes.'},
+      {q:'Which process increases genetic variation during meiosis?', options:['Binary fission','Crossing over','Transpiration','Diffusion'], answer:1, explanation:'Crossing over exchanges DNA between homologous chromosomes during meiosis I.'},
+      {q:'What is the usual site of fertilisation in humans?', options:['Uterus','Oviduct','Cervix','Vagina'], answer:1, explanation:'Fertilisation normally occurs in the oviduct (fallopian tube), especially the ampulla.'}
+    ];
+  }
+
+  function render(){
+    var host=getAssessmentHost();
+    if(!host) return false;
+    // Replace the old text-only assessment with actual controls.
+    host.innerHTML='';
+    host.setAttribute('data-interactive-formative','true');
+    var title=document.createElement('div');
+    title.className='formative-title';
+    title.innerHTML='<h3>FORMATIVE ASSESSMENT</h3><p>Answer all 5 questions. Select one answer for each question, then submit.</p>';
+    host.appendChild(title);
+    var qs=getQuestions();
+    qs.forEach(function(item,i){
+      var box=document.createElement('section');
+      box.className='formative-question';
+      box.innerHTML='<h4>'+ (i+1)+'. '+escapeHtml(item.q)+'</h4>';
+      var choices=document.createElement('div');
+      choices.className='formative-choices';
+      item.options.forEach(function(opt,j){
+        var label=document.createElement('label');
+        label.className='formative-choice';
+        label.innerHTML='<input type="radio" name="formative_'+i+'" value="'+j+'"><span><b>'+String.fromCharCode(65+j)+'.</b> '+escapeHtml(opt)+'</span>';
+        choices.appendChild(label);
       });
-    }catch(e){return questions;}
+      box.appendChild(choices);
+      host.appendChild(box);
+    });
+    var submit=document.createElement('button');
+    submit.type='button';
+    submit.className='btn formative-submit';
+    submit.textContent='SUBMIT FORMATIVE ASSESSMENT';
+    submit.addEventListener('click',function(){submitAssessment(host,qs);});
+    host.appendChild(submit);
+    var result=document.createElement('div');
+    result.id='formativeResult';
+    result.setAttribute('aria-live','polite');
+    host.appendChild(result);
+    return true;
   }
 
-  function renderQuestions(container,questions,lessonId){
-    container.innerHTML=`<div class="fa-box"><h3 class="fa-title">FORMATIVE ASSESSMENT — ANSWER ALL ${questions.length}</h3><p class="fa-subtitle">Select one answer for each question, then submit your answers.</p><div class="fa-list">${questions.map((q,i)=>`<div class="fa-question" data-fa-q="${i}"><div class="fa-qtext">${i+1}. ${escapeHtml(q.question)}</div><div class="fa-options">${q.options.map((o,j)=>`<label class="fa-option"><input type="radio" name="fa_${i}" value="${j}" data-q="${i}"><span><b>${'ABCD'[j]}.</b> ${escapeHtml(o)}</span></label>`).join('')}</div></div>`).join('')}</div><div class="fa-actions"><button class="fa-submit" type="button">Submit Formative Assessment</button></div><div class="fa-result" style="display:none"></div></div>`;
-    container.querySelectorAll('input[type=radio]').forEach(input=>input.addEventListener('change',()=>{
-      const q=container.querySelector(`[data-fa-q="${input.dataset.q}"]`);q?.classList.add('done');
-      q?.querySelectorAll('.fa-option').forEach(x=>x.classList.remove('selected'));input.closest('.fa-option')?.classList.add('selected');
-    }));
-    container.querySelector('.fa-submit').addEventListener('click',()=>submitAssessment(container,questions,lessonId));
-  }
-
-  async function submitAssessment(container,questions,lessonId){
-    if(busy)return;
-    const answers={};
-    for(let i=0;i<questions.length;i++){
-      const selected=container.querySelector(`input[name="fa_${i}"]:checked`);
-      if(!selected){
-        const result=container.querySelector('.fa-result');result.style.display='block';result.className='fa-result fa-warn';result.textContent=`Please answer question ${i+1} before submitting.`;container.querySelector(`[data-fa-q="${i}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});return;
+  async function submitAssessment(host,qs){
+    var score=0, answered=0;
+    qs.forEach(function(item,i){
+      var selected=host.querySelector('input[name="formative_'+i+'"]:checked');
+      var labels=host.querySelectorAll('input[name="formative_'+i+'"]');
+      labels.forEach(function(input){input.closest('label').classList.remove('correct','incorrect');});
+      if(selected){
+        answered++;
+        var label=selected.closest('label');
+        if(Number(selected.value)===item.answer){score++;label.classList.add('correct');}
+        else label.classList.add('incorrect');
       }
-      const q=questions[i];answers[q.id||`formative_${i+1}`]=q.options[Number(selected.value)];
+    });
+    var result=host.querySelector('#formativeResult');
+    if(answered<qs.length){
+      result.className='formative-result warning';
+      result.textContent='Please answer all 5 questions before submitting.';
+      return;
     }
-    const result=container.querySelector('.fa-result');result.style.display='block';result.className='fa-result fa-warn';result.textContent='Submitting your formative assessment…';
-    const btn=container.querySelector('.fa-submit');btn.disabled=true;busy=true;
+    var percent=Math.round(score/qs.length*100);
+    result.className='formative-result '+(percent>=50?'good':'bad');
+    result.innerHTML='<strong>Assessment completed.</strong> Score: '+score+'/'+qs.length+' ('+percent+'%). '+(percent>=50?'Good work. Review the highlighted answers and continue to the next lesson.':'Review the lesson content and try again.');
+    host.dataset.completed='true';
+    host.dataset.score=String(score);
+    // Persist locally immediately; if the application exposes its existing
+    // assessment persistence function, use it as well.
     try{
-      let score=0;
-      questions.forEach((q,i)=>{
-        const chosen=q.options[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)];
-        if(q.correctValue && clean(chosen)===clean(q.correctValue))score++;
-        else if(q.correct && 'ABCD'[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)]===q.correct)score++;
-      });
-      let saved=false;
-      if(window.submitQuizAttempt && window.__activeModuleId && questions.every(q=>q.id)){
-        const response=await window.submitQuizAttempt({moduleId:window.__activeModuleId,answers,clientSubmissionId:window.createClientSubmissionId?window.createClientSubmissionId():`fa-${Date.now()}-${Math.random().toString(36).slice(2)}`});
-        if(response?.queued||response?.data)saved=true;
-        if(response?.data?.score!=null)score=Number(response.data.score);
-      }
-      const client=(typeof sb!=='undefined')?sb:null;
-      const user=(typeof currentUser!=='undefined')?currentUser:null;
-      if(client&&user&&lessonId){
-        await client.from('lesson_progress').upsert({student_id:user.id,lesson_id:lessonId,completed:true,completed_at:new Date().toISOString()},{onConflict:'student_id,lesson_id'});
-      }
-      const percent=Math.round(score/questions.length*100);
-      result.className=`fa-result ${percent>=50?'fa-good':'fa-warn'}`;
-      result.innerHTML=`<b>Assessment completed — Score: ${score}/${questions.length} (${percent}%).</b><br><span>✓ This lesson is now marked as completed.</span><div class="fa-review">${questions.map((q,i)=>{const chosen=q.options[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)];const ok=q.correctValue?clean(chosen)===clean(q.correctValue):(q.correct&&'ABCD'[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)]===q.correct);return `<div class="fa-review ${ok?'correct':'wrong'}"><b>${i+1}. ${ok?'✓ Correct':'✗ Review'}</b> — Your answer: ${escapeHtml(chosen)}${!ok&&q.correctValue?`<br>Correct answer: <b>${escapeHtml(q.correctValue)}</b>`:''}</div>`}).join('')}</div>`;
-      container.querySelectorAll('input').forEach(x=>x.disabled=true);btn.textContent='Assessment Completed';
-      if(saved&&window.refreshLiveSurface)window.refreshLiveSurface('formative-assessment');
-    }catch(e){
-      result.className='fa-result fa-warn';result.textContent='The assessment could not be submitted. Please try again.';btn.disabled=false;
-    }finally{busy=false;}
+      localStorage.setItem('isdlss_formative_module1_completed','true');
+      localStorage.setItem('isdlss_formative_module1_score',String(score));
+      if(typeof window.saveAssessmentResult==='function') await window.saveAssessmentResult('biology-module-1',score,qs.length);
+    }catch(e){}
   }
 
-  function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
-
-  async function processLesson(article){
-    if(!article||article.dataset.faProcessed)return;
-    const content=article.querySelector('.lesson-content');if(!content)return;
-    const parsed=parseAssessment(content.textContent);if(!parsed||parsed.questions.length<5)return;
-    article.dataset.faProcessed='loading';
-    const questions=await loadQuestionKeys(window.__activeModuleId,parsed.questions.slice(0,5));
-    const marker=document.createElement('div');marker.className='fa-mount';
-    const completeButton=article.querySelector('button[onclick*="toggleLessonComplete"]');
-    const idMatch=completeButton?.getAttribute('onclick')?.match(/toggleLessonComplete\('([^']+)'/);
-    const lessonId=idMatch?idMatch[1]:null;
-    const studyText=content.textContent.slice(parsed.endIndex);
-    const mainText=content.textContent.slice(0,parsed.start).trim();
-    const studyPart=studyText.trim();
-    content.textContent=mainText;
-    content.insertAdjacentElement('afterend',marker);
-    renderQuestions(marker,questions,lessonId);
-    const study=studyPart?document.createElement('div'):null;
-    if(study){study.className='lesson-content';study.textContent=studyPart;marker.insertAdjacentElement('afterend',study);}
-    article.dataset.faProcessed='yes';
-  }
-
-  async function scan(){
-    addStyles();
-    const articles=[...document.querySelectorAll('article.card')];
-    for(const article of articles)await processLesson(article);
+  function injectStyles(){
+    if(document.getElementById('interactive-formative-styles')) return;
+    var s=document.createElement('style');s.id='interactive-formative-styles';
+    s.textContent=''+
+      '[data-interactive-formative]{margin-top:18px}'+
+      '.formative-title{padding:16px 18px;background:#eef7f1;border:1px solid #d9eee2;border-radius:14px;margin-bottom:14px}'+
+      '.formative-title h3{margin:0 0 5px;color:#075c3a;font-size:20px}'+
+      '.formative-title p{margin:0;color:#65746e;font-size:14px}'+
+      '.formative-question{padding:16px;margin:12px 0;border:1px solid #dfe7e2;border-radius:14px;background:#fff}'+
+      '.formative-question h4{margin:0 0 12px;line-height:1.55;font-size:16px}'+
+      '.formative-choices{display:grid;gap:9px}'+
+      '.formative-choice{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;cursor:pointer;transition:.15s}'+
+      '.formative-choice:hover{background:#f5f8f7;border-color:#9db9aa}'+
+      '.formative-choice input{margin-top:4px;accent-color:#075c3a}'+
+      '.formative-choice.correct{border:2px solid #18804f;background:#e9f8ee}'+
+      '.formative-choice.incorrect{border:2px solid #dc4c64;background:#fff0f1}'+
+      '.formative-submit{width:100%;margin-top:15px;padding:13px;font-size:14px}'+
+      '.formative-result{margin-top:14px;padding:14px;border-radius:10px;line-height:1.55}'+
+      '.formative-result.good{background:#e9f8ee;color:#075c3a}.formative-result.bad{background:#fff0f1;color:#a3223c}.formative-result.warning{background:#fff8e8;color:#805400}';
+    document.head.appendChild(s);
   }
 
   function boot(){
-    addStyles();scan();
-    const observer=new MutationObserver(()=>{if(!busy)scan()});
-    observer.observe(document.body,{childList:true,subtree:true});
-    setInterval(()=>{if(!busy)scan()},1200);
+    injectStyles();
+    // Run repeatedly because the LMS renders course/lesson screens dynamically.
+    render();
+    var tries=0;
+    var timer=setInterval(function(){
+      tries++;
+      if(render() || tries>30) clearInterval(timer);
+    },500);
+    var obs=new MutationObserver(function(){
+      if(document.querySelector('#moduleQuiz') && !document.querySelector('[data-interactive-formative="true"]')) render();
+    });
+    obs.observe(document.body,{childList:true,subtree:true});
   }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
