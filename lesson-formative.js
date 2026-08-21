@@ -2,54 +2,17 @@
   'use strict';
   const PREFIX='isdlss-lesson-formative-v1';
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function opts(q){
-    if(Array.isArray(q?.options)) return q.options.map(String);
-    if(q?.options && typeof q.options==='object') return Object.keys(q.options).sort().map(k=>String(q.options[k]));
-    if(typeof q?.options==='string'){try{const x=JSON.parse(q.options);return Array.isArray(x)?x.map(String):Object.keys(x).sort().map(k=>String(x[k]));}catch{return[]}}
-    return [];
-  }
+  function opts(q){if(Array.isArray(q?.options))return q.options.map(String);if(q?.options&&typeof q.options==='object')return Object.keys(q.options).sort().map(k=>String(q.options[k]));if(typeof q?.options==='string'){try{const x=JSON.parse(q.options);return Array.isArray(x)?x.map(String):Object.keys(x).sort().map(k=>String(x[k]));}catch{return[]}}return[];}
   function lessonId(article){const b=article.querySelector('button[onclick*="toggleLessonComplete"]');const m=b?.getAttribute('onclick')?.match(/toggleLessonComplete\('([^']+)'/);return m?.[1]||null;}
   function lessonNumber(article){const t=article.querySelector('.badge')?.textContent||'';const m=t.match(/LESSON\s+(\d+)/i);return m?Number(m[1]):null;}
   function questionsFor(n){const qs=(window.__moduleQuestions||[]).slice().sort((a,b)=>Number(a.position||0)-Number(b.position||0));return qs.slice(Math.max(0,(n-1)*5),Math.max(0,(n-1)*5)+5);}
   function build(article,n){
-    if(article.querySelector('.lesson-formative-card')) return;
-    const qs=questionsFor(n); if(qs.length<1) return;
-    const lid=lessonId(article); if(!lid) return;
-    const host=document.createElement('section');host.className='lesson-formative-card';host.dataset.lessonId=lid;
-    host.innerHTML='<div class="lf-head"><span>FORMATIVE ASSESSMENT</span><b>Answer all 5 questions</b><small>Select one answer for each question, then submit for automatic marking.</small></div>';
+    if(article.querySelector('.lesson-formative-card'))return;const qs=questionsFor(n);if(qs.length<1)return;const lid=lessonId(article);if(!lid)return;
+    const host=document.createElement('section');host.className='lesson-formative-card';host.dataset.lessonId=lid;host.innerHTML='<div class="lf-head"><span>FORMATIVE ASSESSMENT</span><b>Answer all 5 questions</b><small>Select one answer for each question, then submit for automatic marking.</small></div>';
     const form=document.createElement('div');form.className='lf-form';
-    qs.forEach((q,i)=>{
-      const box=document.createElement('div');box.className='lf-question';box.dataset.questionId=q.id;
-      const title=document.createElement('h4');title.textContent=(i+1)+'. '+q.question;box.appendChild(title);
-      const choiceWrap=document.createElement('div');choiceWrap.className='lf-choices';
-      opts(q).forEach((o,j)=>{
-        const label=document.createElement('label');label.className='lf-choice';
-        const input=document.createElement('input');input.type='radio';input.name=PREFIX+'-'+lid+'-'+i;input.value=String.fromCharCode(65+j);
-        const span=document.createElement('span');span.innerHTML='<b>'+String.fromCharCode(65+j)+'.</b> '+esc(o);
-        label.append(input,span);choiceWrap.appendChild(label);
-      });
-      box.appendChild(choiceWrap);form.appendChild(box);
-    });
-    host.appendChild(form);
-    const submit=document.createElement('button');submit.type='button';submit.className='btn lf-submit';submit.textContent='SUBMIT FORMATIVE ASSESSMENT';
-    const result=document.createElement('div');result.className='lf-result';result.setAttribute('aria-live','polite');
-    submit.addEventListener('click',async()=>{
-      const answers={};let complete=true;
-      qs.forEach((q,i)=>{const chosen=host.querySelector('input[name="'+PREFIX+'-'+lid+'-'+i+'"]:checked');if(!chosen)complete=false;else answers[q.id]=chosen.value;});
-      if(!complete){result.className='lf-result warning';result.textContent='Please answer all 5 questions before submitting.';return;}
-      submit.disabled=true;submit.textContent='MARKING…';result.className='lf-result';result.textContent='Checking answers and saving your result…';
-      try{
-        if(!window.sb||typeof window.sb.rpc!=='function') throw new Error('Learning service is not ready. Please try again.');
-        const {data,error}=await window.sb.rpc('submit_lesson_formative',{p_lesson_id:lid,p_answers:answers});
-        if(error) throw error;
-        const row=Array.isArray(data)?data[0]:data;const score=Number(row?.score||0),max=Number(row?.max_score||qs.length),pct=max?Math.round(score/max*100):0;
-        try{localStorage.setItem(PREFIX+':'+lid,JSON.stringify({score,max_score:max,completed_at:row?.completed_at||new Date().toISOString()}));}catch{}
-        result.className='lf-result '+(pct>=50?'good':'bad');
-        result.innerHTML='<strong>Assessment completed.</strong> Score: '+score+'/'+max+' ('+pct+'%).<br>'+ (pct>=50?'Good work. Review any incorrect answers and continue learning.':'Review the lesson content and try again.');
-        host.dataset.completed='true';host.dataset.score=String(score);submit.textContent='SUBMITTED — TRY AGAIN';submit.disabled=false;
-        host.querySelectorAll('.lf-choice').forEach(l=>l.classList.remove('selected'));host.querySelectorAll('input:checked').forEach(i=>i.closest('label')?.classList.add('selected'));
-      }catch(e){result.className='lf-result bad';result.textContent=e?.message||'Unable to mark this assessment. Please try again.';submit.disabled=false;submit.textContent='SUBMIT FORMATIVE ASSESSMENT';}
-    });
+    qs.forEach((q,i)=>{const box=document.createElement('div');box.className='lf-question';box.dataset.questionId=q.id;const title=document.createElement('h4');title.textContent=(i+1)+'. '+q.question;box.appendChild(title);const choiceWrap=document.createElement('div');choiceWrap.className='lf-choices';opts(q).forEach((o,j)=>{const label=document.createElement('label');label.className='lf-choice';const input=document.createElement('input');input.type='radio';input.name=PREFIX+'-'+lid+'-'+i;input.value=String.fromCharCode(65+j);const span=document.createElement('span');span.innerHTML='<b>'+String.fromCharCode(65+j)+'.</b> '+esc(o);label.append(input,span);choiceWrap.appendChild(label);});box.appendChild(choiceWrap);form.appendChild(box);});
+    host.appendChild(form);const submit=document.createElement('button');submit.type='button';submit.className='btn lf-submit';submit.textContent='SUBMIT FORMATIVE ASSESSMENT';const result=document.createElement('div');result.className='lf-result';result.setAttribute('aria-live','polite');
+    submit.addEventListener('click',async()=>{const answers={};let complete=true;qs.forEach((q,i)=>{const chosen=host.querySelector('input[name="'+PREFIX+'-'+lid+'-'+i+'"]:checked');if(!chosen)complete=false;else answers[q.id]=chosen.value;});if(!complete){result.className='lf-result warning';result.textContent='Please answer all 5 questions before submitting.';return;}submit.disabled=true;submit.textContent='MARKING…';result.className='lf-result';result.textContent='Checking answers and saving your result…';try{const client=(typeof sb!=='undefined'?sb:window.sb);if(!client||typeof client.rpc!=='function')throw new Error('Learning service is not ready. Please try again.');const {data,error}=await client.rpc('submit_lesson_formative',{p_lesson_id:lid,p_answers:answers});if(error)throw error;const row=Array.isArray(data)?data[0]:data;const score=Number(row?.score||0),max=Number(row?.max_score||qs.length),pct=max?Math.round(score/max*100):0;try{localStorage.setItem(PREFIX+':'+lid,JSON.stringify({score,max_score:max,completed_at:row?.completed_at||new Date().toISOString()}));}catch{}result.className='lf-result '+(pct>=50?'good':'bad');result.innerHTML='<strong>Assessment completed.</strong> Score: '+score+'/'+max+' ('+pct+'%).<br>'+(pct>=50?'Good work. Review any incorrect answers and continue learning.':'Review the lesson content and try again.');host.dataset.completed='true';host.dataset.score=String(score);submit.textContent='SUBMITTED — TRY AGAIN';submit.disabled=false;host.querySelectorAll('.lf-choice').forEach(l=>l.classList.remove('selected'));host.querySelectorAll('input:checked').forEach(i=>i.closest('label')?.classList.add('selected'));}catch(e){result.className='lf-result bad';result.textContent=e?.message||'Unable to mark this assessment. Please try again.';submit.disabled=false;submit.textContent='SUBMIT FORMATIVE ASSESSMENT';}});
     host.append(submit,result);const anchor=article.querySelector('button[onclick*="toggleLessonComplete"]');if(anchor)anchor.before(host);else article.appendChild(host);
   }
   function cleanLegacy(article){const c=article.querySelector('.lesson-content');if(!c)return;const text=c.textContent||'';const marker='𝗙𝗢𝗥𝗠𝗔𝗧𝗜𝗩𝗘 𝗔𝗦𝗦𝗘𝗦𝗦𝗠𝗘𝗡𝗧';const study='𝗦𝗧𝗨𝗗𝗬 𝗖𝗛𝗘𝗖𝗞';const a=text.indexOf(marker);if(a>=0){const b=text.indexOf(study,a);c.textContent=(text.slice(0,a).trim()+'\n\n'+(b>=0?text.slice(b).trim():'')).trim();}}
