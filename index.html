@@ -734,7 +734,7 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let role='Student', profile=null, currentUser=null;
 
 function validPassword(p){return p.length>=8 && /[A-Za-z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p)}
-function gatewayUrl(){return SUPABASE_URL+'/functions/v1/auth-gateway'}
+function gatewayUrl(){return SUPABASE_URL+'/functions/v1/auth-gateway-v2'}
 
 async function login(){
  const selected=document.getElementById('loginRole').value;
