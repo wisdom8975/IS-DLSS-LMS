@@ -69,16 +69,16 @@
     }catch(e){return questions;}
   }
 
-  function renderQuestions(container,questions){
+  function renderQuestions(container,questions,lessonId){
     container.innerHTML=`<div class="fa-box"><h3 class="fa-title">FORMATIVE ASSESSMENT — ANSWER ALL ${questions.length}</h3><p class="fa-subtitle">Select one answer for each question, then submit your answers.</p><div class="fa-list">${questions.map((q,i)=>`<div class="fa-question" data-fa-q="${i}"><div class="fa-qtext">${i+1}. ${escapeHtml(q.question)}</div><div class="fa-options">${q.options.map((o,j)=>`<label class="fa-option"><input type="radio" name="fa_${i}" value="${j}" data-q="${i}"><span><b>${'ABCD'[j]}.</b> ${escapeHtml(o)}</span></label>`).join('')}</div></div>`).join('')}</div><div class="fa-actions"><button class="fa-submit" type="button">Submit Formative Assessment</button></div><div class="fa-result" style="display:none"></div></div>`;
     container.querySelectorAll('input[type=radio]').forEach(input=>input.addEventListener('change',()=>{
       const q=container.querySelector(`[data-fa-q="${input.dataset.q}"]`);q?.classList.add('done');
       q?.querySelectorAll('.fa-option').forEach(x=>x.classList.remove('selected'));input.closest('.fa-option')?.classList.add('selected');
     }));
-    container.querySelector('.fa-submit').addEventListener('click',()=>submitAssessment(container,questions));
+    container.querySelector('.fa-submit').addEventListener('click',()=>submitAssessment(container,questions,lessonId));
   }
 
-  async function submitAssessment(container,questions){
+  async function submitAssessment(container,questions,lessonId){
     if(busy)return;
     const answers={};
     for(let i=0;i<questions.length;i++){
@@ -100,22 +100,23 @@
       let saved=false;
       if(window.submitQuizAttempt && window.__activeModuleId && questions.every(q=>q.id)){
         const response=await window.submitQuizAttempt({moduleId:window.__activeModuleId,answers,clientSubmissionId:window.createClientSubmissionId?window.createClientSubmissionId():`fa-${Date.now()}-${Math.random().toString(36).slice(2)}`});
-        if(response?.queued){saved=true;}
-        else if(response?.data){score=Number(response.data.score??score);saved=true;}
+        if(response?.queued||response?.data)saved=true;
+        if(response?.data?.score!=null)score=Number(response.data.score);
+      }
+      const client=(typeof sb!=='undefined')?sb:null;
+      const user=(typeof currentUser!=='undefined')?currentUser:null;
+      if(client&&user&&lessonId){
+        await client.from('lesson_progress').upsert({student_id:user.id,lesson_id:lessonId,completed:true,completed_at:new Date().toISOString()},{onConflict:'student_id,lesson_id'});
       }
       const percent=Math.round(score/questions.length*100);
       result.className=`fa-result ${percent>=50?'fa-good':'fa-warn'}`;
-      result.innerHTML=`<b>Assessment completed — Score: ${score}/${questions.length} (${percent}%).</b><div class="fa-review">${questions.map((q,i)=>{const chosen=q.options[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)];const ok=q.correctValue?clean(chosen)===clean(q.correctValue):(q.correct&&'ABCD'[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)]===q.correct);return `<div class="fa-review ${ok?'correct':'wrong'}"><b>${i+1}. ${ok?'✓ Correct':'✗ Review'}</b> — Your answer: ${escapeHtml(chosen)}${!ok&&q.correctValue?`<br>Correct answer: <b>${escapeHtml(q.correctValue)}</b>`:''}</div>`}).join('')}</div>`;
-      if(saved&&responseQueued())result.innerHTML='<b>Assessment saved.</b><br>Your answers have been recorded and will sync if needed.'+result.innerHTML;
+      result.innerHTML=`<b>Assessment completed — Score: ${score}/${questions.length} (${percent}%).</b><br><span>✓ This lesson is now marked as completed.</span><div class="fa-review">${questions.map((q,i)=>{const chosen=q.options[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)];const ok=q.correctValue?clean(chosen)===clean(q.correctValue):(q.correct&&'ABCD'[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)]===q.correct);return `<div class="fa-review ${ok?'correct':'wrong'}"><b>${i+1}. ${ok?'✓ Correct':'✗ Review'}</b> — Your answer: ${escapeHtml(chosen)}${!ok&&q.correctValue?`<br>Correct answer: <b>${escapeHtml(q.correctValue)}</b>`:''}</div>`}).join('')}</div>`;
       container.querySelectorAll('input').forEach(x=>x.disabled=true);btn.textContent='Assessment Completed';
       if(saved&&window.refreshLiveSurface)window.refreshLiveSurface('formative-assessment');
     }catch(e){
       result.className='fa-result fa-warn';result.textContent='The assessment could not be submitted. Please try again.';btn.disabled=false;
     }finally{busy=false;}
   }
-
-  let lastQueued=false;
-  function responseQueued(){const x=lastQueued;lastQueued=false;return x;}
 
   function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 
@@ -126,12 +127,15 @@
     article.dataset.faProcessed='loading';
     const questions=await loadQuestionKeys(window.__activeModuleId,parsed.questions.slice(0,5));
     const marker=document.createElement('div');marker.className='fa-mount';
+    const completeButton=article.querySelector('button[onclick*="toggleLessonComplete"]');
+    const idMatch=completeButton?.getAttribute('onclick')?.match(/toggleLessonComplete\('([^']+)'/);
+    const lessonId=idMatch?idMatch[1]:null;
     const studyText=content.textContent.slice(parsed.endIndex);
     const mainText=content.textContent.slice(0,parsed.start).trim();
     const studyPart=studyText.trim();
     content.textContent=mainText;
     content.insertAdjacentElement('afterend',marker);
-    renderQuestions(marker,questions);
+    renderQuestions(marker,questions,lessonId);
     const study=studyPart?document.createElement('div'):null;
     if(study){study.className='lesson-content';study.textContent=studyPart;marker.insertAdjacentElement('afterend',study);}
     article.dataset.faProcessed='yes';
