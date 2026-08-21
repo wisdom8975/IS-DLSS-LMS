@@ -1,4 +1,4 @@
-const CACHE='isdlss-lms-v15-formative-assessment';
+const CACHE='isdlss-lms-v16-formative-assessment';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest'];
 const OLD_SUPABASE='https://mnypxpwcfydyqeiyigom.supabase.co';
 const NEW_SUPABASE='https://vahkwyetointavhzwfef.supabase.co';
