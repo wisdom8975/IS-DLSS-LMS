@@ -53,18 +53,18 @@
   }
 
   async function loadQuestionKeys(moduleId,questions){
-    if(!window.sb||!moduleId)return questions;
+    const client=(typeof sb!=='undefined')?sb:null;
+    if(!client||!moduleId)return questions;
     try{
-      const {data,error}=await window.sb.from('quiz_questions').select('id,module_id,question,options,correct_answer,position').eq('module_id',moduleId).order('position');
+      const {data,error}=await client.from('quiz_questions').select('id,module_id,question,options,correct_answer,position').eq('module_id',moduleId).order('position');
       if(error||!data)return questions;
       return questions.map(q=>{
         const found=data.find(x=>clean(x.question)===clean(q.question));
         if(!found)return q;
         const opts=Array.isArray(found.options)?found.options:(found.options||{});
         const optionValues=Object.values(opts);
-        const letters=['A','B','C','D'];
         const correctValue=opts[found.correct_answer]||found.correct_answer;
-        return {...q,id:found.id,correct:found.correct_answer,correctValue,dbOptions:optionValues.length===4?optionValues:null,letters};
+        return {...q,id:found.id,correct:found.correct_answer,correctValue,dbOptions:optionValues.length===4?optionValues:null};
       });
     }catch(e){return questions;}
   }
@@ -92,7 +92,6 @@
     const btn=container.querySelector('.fa-submit');btn.disabled=true;busy=true;
     try{
       let score=0;
-      const hasKeys=questions.every(q=>q.correctValue||q.correct);
       questions.forEach((q,i)=>{
         const chosen=q.options[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)];
         if(q.correctValue && clean(chosen)===clean(q.correctValue))score++;
@@ -101,18 +100,22 @@
       let saved=false;
       if(window.submitQuizAttempt && window.__activeModuleId && questions.every(q=>q.id)){
         const response=await window.submitQuizAttempt({moduleId:window.__activeModuleId,answers,clientSubmissionId:window.createClientSubmissionId?window.createClientSubmissionId():`fa-${Date.now()}-${Math.random().toString(36).slice(2)}`});
-        if(response?.queued){result.className='fa-result fa-warn';result.innerHTML='<b>Assessment saved on this device.</b><br>It will synchronize automatically when you reconnect.';saved=true;}
+        if(response?.queued){saved=true;}
         else if(response?.data){score=Number(response.data.score??score);saved=true;}
       }
       const percent=Math.round(score/questions.length*100);
       result.className=`fa-result ${percent>=50?'fa-good':'fa-warn'}`;
       result.innerHTML=`<b>Assessment completed — Score: ${score}/${questions.length} (${percent}%).</b><div class="fa-review">${questions.map((q,i)=>{const chosen=q.options[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)];const ok=q.correctValue?clean(chosen)===clean(q.correctValue):(q.correct&&'ABCD'[Number(container.querySelector(`input[name="fa_${i}"]:checked`).value)]===q.correct);return `<div class="fa-review ${ok?'correct':'wrong'}"><b>${i+1}. ${ok?'✓ Correct':'✗ Review'}</b> — Your answer: ${escapeHtml(chosen)}${!ok&&q.correctValue?`<br>Correct answer: <b>${escapeHtml(q.correctValue)}</b>`:''}</div>`}).join('')}</div>`;
+      if(saved&&responseQueued())result.innerHTML='<b>Assessment saved.</b><br>Your answers have been recorded and will sync if needed.'+result.innerHTML;
       container.querySelectorAll('input').forEach(x=>x.disabled=true);btn.textContent='Assessment Completed';
       if(saved&&window.refreshLiveSurface)window.refreshLiveSurface('formative-assessment');
     }catch(e){
       result.className='fa-result fa-warn';result.textContent='The assessment could not be submitted. Please try again.';btn.disabled=false;
     }finally{busy=false;}
   }
+
+  let lastQueued=false;
+  function responseQueued(){const x=lastQueued;lastQueued=false;return x;}
 
   function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 
