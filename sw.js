@@ -1,4 +1,4 @@
-const CACHE='isdlss-v20260821-4';
+const CACHE='isdlss-v20260821-5';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./formative-assessment.js','./assessment-loader.js'];
 self.addEventListener('install',event=>{
   self.skipWaiting();
@@ -16,13 +16,13 @@ self.addEventListener('fetch',event=>{
   if(req.mode==='navigate' || url.pathname.endsWith('/index.html')){
     event.respondWith(fetch(req,{cache:'no-store'}).then(async response=>{
       const text=await response.clone().text();
-      if(!text.includes('data-formative-loader')){
-        const injected=text.replace('</head>','<script src="assessment-loader.js?v=20260821-4" defer data-formative-loader></script></head>');
-        const headers=new Headers(response.headers);
-        headers.set('content-type','text/html; charset=utf-8');
-        return new Response(injected,{status:response.status,statusText:response.statusText,headers});
+      let injected=text;
+      if(!injected.includes('formative-assessment.js?v=20260821-5')){
+        injected=injected.replace('</head>','<script src="formative-assessment.js?v=20260821-5" defer data-direct-formative-assessment></script></head>');
       }
-      return response;
+      const headers=new Headers(response.headers);
+      headers.set('content-type','text/html; charset=utf-8');
+      return new Response(injected,{status:response.status,statusText:response.statusText,headers});
     }).catch(()=>caches.match('./index.html')));
     return;
   }
