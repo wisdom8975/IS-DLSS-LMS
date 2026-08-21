@@ -1,4 +1,4 @@
--- Applied to Supabase project mnypxpwcfydyqeiyigom on 2026-08-20.
+-- Applied to Supabase project vahkwyetointavhzwfef on 2026-08-20.
 -- Hosted Supabase/Postgres is authoritative; browser storage is offline cache/queue only.
 
 create or replace function public.handle_new_user()
