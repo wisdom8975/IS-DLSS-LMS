@@ -1,158 +1,154 @@
 (function(){
   'use strict';
-  const PREFIX='isdlss-lesson-formative-v4';
-  const ITEMS_PER_LESSON=20;
+  const ITEMS=20;
+  const PREFIX='isdlss-lesson-formative-v5';
 
-  function esc(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
-  function opts(q){
-    if(Array.isArray(q?.options))return q.options.map(String);
-    if(q?.options&&typeof q.options==='object')return Object.keys(q.options).sort().map(k=>String(q.options[k]));
-    if(typeof q?.options==='string'){
-      try{const x=JSON.parse(q.options);return Array.isArray(x)?x.map(String):Object.keys(x).sort().map(k=>String(x[k]));}catch{return[]}
-    }
-    return[];
+  const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+  const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
+
+  function options(q){
+    let x=q?.options;
+    if(typeof x==='string'){try{x=JSON.parse(x)}catch{x=[]}}
+    if(Array.isArray(x))return x.map(String);
+    if(x&&typeof x==='object')return Object.keys(x).sort().map(k=>String(x[k]));
+    return [];
   }
+
+  function shuffle(a){
+    const x=a.slice();
+    for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}
+    return x;
+  }
+
   function lessonId(article){
     const b=article.querySelector('button[onclick*=\"toggleLessonComplete\"]');
     const m=b?.getAttribute('onclick')?.match(/toggleLessonComplete\('([^']+)'/);
     return m?.[1]||null;
   }
+
   function lessonNumber(article){
     const t=article.querySelector('.badge')?.textContent||'';
-    const m=t.match(/LESSON\s+(\d+)/i);
-    return m?Number(m[1]):null;
+    const m=t.match(/LESSON\s+(\d+)/i);return m?Number(m[1]):null;
   }
+
   function questionsFor(n,lid){
-    const all=(window.__moduleQuestions||[]).slice();
-    let qs=all.filter(q=>String(q?.lesson_id||'')===String(lid));
-    if(qs.length<ITEMS_PER_LESSON){
-      const sorted=all.slice().sort((a,b)=>Number(a.position||0)-Number(b.position||0));
-      const start=Math.max(0,(n-1)*ITEMS_PER_LESSON);
-      qs=sorted.slice(start,start+ITEMS_PER_LESSON);
-    }
-    return qs.sort((a,b)=>Number(a.position||0)-Number(b.position||0)).slice(0,ITEMS_PER_LESSON);
-  }
-  function normal(v){return String(v??'').trim().toLowerCase().replace(/\s+/g,' ');}
-  function answerToLetter(q,value){
-    const s=String(value??'').trim();
-    if(!s)return null;
-    const letter=s.match(/^([A-D])(?:[.)]|\s|$)/i);
-    if(letter)return letter[1].toUpperCase();
-    const os=opts(q);
-    const i=os.findIndex(o=>normal(o)===normal(s));
-    return i>=0?String.fromCharCode(65+i):null;
-  }
-
-  function build(article,n){
-    if(article.querySelector('.lesson-formative-card'))return;
-    const lid=lessonId(article);if(!lid)return;
-    const qs=questionsFor(n,lid);if(qs.length!==ITEMS_PER_LESSON)return;
-
-    const host=document.createElement('section');
-    host.className='lesson-formative-card';
-    host.dataset.lessonId=lid;
-    host.innerHTML='<div class="lf-head"><div class="lf-kicker">FORMATIVE ASSESSMENT</div><h3>20-question lesson assessment</h3><p>Type your answer in the box or tap an option. Your response is saved and marked automatically when you submit.</p><div class="lf-progress"><span class="lf-progress-bar"></span></div><div class="lf-progress-text">Question 1 of 20</div></div>';
-
-    const form=document.createElement('div');form.className='lf-form';
-    const state=Array(ITEMS_PER_LESSON).fill(null);let current=0;
-
-    qs.forEach((q,i)=>{
-      const box=document.createElement('div');box.className='lf-question';box.dataset.index=String(i);box.dataset.questionId=q.id;
-      const title=document.createElement('h4');
-      title.innerHTML='<span class="lf-number">'+(i+1)+'</span><span>'+esc(q.question)+'</span>';
-      box.appendChild(title);
-
-      const answerLabel=document.createElement('label');answerLabel.className='lf-answer-label';answerLabel.textContent='Your answer';
-      const input=document.createElement('input');input.type='text';input.className='lf-answer-input';input.placeholder='Type your answer or A, B, C or D';input.autocomplete='off';input.setAttribute('aria-label','Answer to question '+(i+1));
-      input.addEventListener('input',()=>{state[i]=input.value.trim()||null;choiceWrap.querySelectorAll('.lf-choice').forEach(x=>x.classList.remove('selected'));updateProgress();});
-      answerLabel.appendChild(input);box.appendChild(answerLabel);
-
-      const choiceWrap=document.createElement('div');choiceWrap.className='lf-choices';
-      opts(q).forEach((o,j)=>{
-        const label=document.createElement('button');label.type='button';label.className='lf-choice';
-        label.innerHTML='<b>'+String.fromCharCode(65+j)+'.</b> '+esc(o);
-        label.addEventListener('click',()=>{
-          input.value=String.fromCharCode(65+j);
-          state[i]=input.value;
-          choiceWrap.querySelectorAll('.lf-choice').forEach(x=>x.classList.remove('selected'));
-          label.classList.add('selected');
-          updateProgress();
-        });
-        choiceWrap.appendChild(label);
-      });
-      box.appendChild(choiceWrap);form.appendChild(box);
-    });
-    host.appendChild(form);
-
-    const nav=document.createElement('div');nav.className='lf-nav';
-    const prev=document.createElement('button');prev.type='button';prev.className='btn alt lf-prev';prev.textContent='← Previous';
-    const next=document.createElement('button');next.type='button';next.className='btn lf-next';next.textContent='Next →';
-    nav.append(prev,next);
-
-    const dots=document.createElement('div');dots.className='lf-dots';
-    qs.forEach((_,i)=>{const d=document.createElement('button');d.type='button';d.className='lf-dot';d.textContent=String(i+1);d.setAttribute('aria-label','Go to question '+(i+1));d.addEventListener('click',()=>show(i));dots.appendChild(d);});
-    host.appendChild(dots);host.appendChild(nav);
-
-    const submit=document.createElement('button');submit.type='button';submit.className='btn lf-submit';submit.textContent='SUBMIT & MARK ASSESSMENT';submit.style.display='none';
-    const result=document.createElement('div');result.className='lf-result';result.setAttribute('aria-live','polite');
-
-    submit.addEventListener('click',async()=>{
-      const missing=state.map((v,i)=>v?null:i+1).filter(Boolean);
-      if(missing.length){result.className='lf-result warning';result.textContent='Please answer all 20 questions. Unanswered: '+missing.join(', ')+'.';show(missing[0]-1);return;}
-      submit.disabled=true;prev.disabled=true;next.disabled=true;submit.textContent='MARKING…';result.className='lf-result';result.textContent='Checking answers and saving your result…';
-      try{
-        const client=(typeof sb!=='undefined'?sb:window.sb);
-        if(!client||typeof client.rpc!=='function')throw new Error('Learning service is not ready. Please try again.');
-        const answers={};
-        qs.forEach((q,i)=>{answers[q.id]=answerToLetter(q,state[i])||String(state[i]||'').trim();});
-        const {data,error}=await client.rpc('submit_lesson_formative',{p_lesson_id:lid,p_answers:answers});
-        if(error)throw error;
-        const row=Array.isArray(data)?data[0]:data;
-        const score=Number(row?.score||0),max=Number(row?.max_score||ITEMS_PER_LESSON),pct=max?Math.round(score/max*100):0;
-        try{localStorage.setItem(PREFIX+':'+lid,JSON.stringify({score,max_score:max,completed_at:row?.completed_at||new Date().toISOString()}));}catch{}
-        result.className='lf-result '+(pct>=50?'good':'bad');
-        result.innerHTML='<strong>Assessment completed.</strong><br>Score: '+score+'/'+max+' ('+pct+'%).<br>'+(pct>=50?'Good work. Review the lesson and continue learning.':'Review the lesson content and try again.');
-        host.dataset.completed='true';host.dataset.score=String(score);submit.textContent='SUBMITTED — RETRY';submit.disabled=false;prev.disabled=false;next.disabled=false;
-      }catch(e){
-        result.className='lf-result bad';result.textContent=e?.message||'Unable to mark this assessment. Please try again.';submit.textContent='SUBMIT & MARK ASSESSMENT';submit.disabled=false;prev.disabled=false;next.disabled=false;
-      }
-    });
-
-    host.append(submit,result);
-
-    function answeredCount(){return state.filter(Boolean).length;}
-    function updateProgress(){
-      host.querySelector('.lf-progress-bar').style.width=(answeredCount()/ITEMS_PER_LESSON*100)+'%';
-      host.querySelector('.lf-progress-text').textContent='Question '+(current+1)+' of '+ITEMS_PER_LESSON+' • '+answeredCount()+' answered';
-      dots.querySelectorAll('.lf-dot').forEach((d,i)=>{d.classList.toggle('done',!!state[i]);d.classList.toggle('active',i===current);});
-    }
-    function show(i){
-      current=Math.max(0,Math.min(ITEMS_PER_LESSON-1,i));
-      form.querySelectorAll('.lf-question').forEach((x,j)=>x.classList.toggle('active',j===current));
-      prev.disabled=current===0;next.style.display=current===ITEMS_PER_LESSON-1?'none':'block';submit.style.display=current===ITEMS_PER_LESSON-1?'block':'none';updateProgress();
-      host.scrollIntoView({behavior:'smooth',block:'start'});
-    }
-    prev.addEventListener('click',()=>show(current-1));
-    next.addEventListener('click',()=>{if(!state[current]){result.className='lf-result warning';result.textContent='Please enter or select an answer before moving to the next question.';return;}result.className='lf-result';result.textContent='';show(current+1);});
-
-    const anchor=article.querySelector('button[onclick*=\"toggleLessonComplete\"]');if(anchor)anchor.before(host);else article.appendChild(host);show(0);
+    const all=(window.__moduleQuestions||[]).filter(q=>String(q?.lesson_id||'')===String(lid));
+    return all.sort((a,b)=>Number(a.position||0)-Number(b.position||0)).slice(0,ITEMS);
   }
 
   function cleanLegacy(article){
     const c=article.querySelector('.lesson-content');if(!c)return;
     const text=c.textContent||'';
-    const marker='𝗙𝗢𝗥𝗠𝗔𝗧𝗜𝗩𝗘 𝗔𝗦𝗦𝗘𝗦𝗦𝗠𝗘𝗡𝗧';const study='𝗦𝗧𝗨𝗗𝗬 𝗖𝗛𝗘𝗖𝗞';
-    const a=text.indexOf(marker);if(a>=0){const b=text.indexOf(study,a);c.textContent=(text.slice(0,a).trim()+'\n\n'+(b>=0?text.slice(b).trim():'')).trim();}
+    const marker='𝗙𝗢𝗥𝗠𝗔𝗧𝗜𝗩𝗘 𝗔𝗦𝗦𝗘𝗦𝗦𝗠𝗘𝗡𝗧',study='𝗦𝗧𝗨𝗗𝗬 𝗖𝗛𝗘𝗖𝗞';
+    const a=text.indexOf(marker);
+    if(a>=0){const b=text.indexOf(study,a);c.textContent=(text.slice(0,a).trim()+'\n\n'+(b>=0?text.slice(b).trim():'')).trim();}
+  }
+
+  function build(article,n){
+    if(article.querySelector('.lesson-formative-card'))return;
+    const lid=lessonId(article);if(!lid)return;
+    const qs=questionsFor(n,lid);if(qs.length!==ITEMS)return;
+
+    const prepared=qs.map(q=>({q,opts:shuffle(options(q))}));
+    const state=Array(ITEMS).fill(null);
+    let current=0;
+
+    const host=document.createElement('section');
+    host.className='lesson-formative-card';host.dataset.lessonId=lid;
+    host.innerHTML='<div class="lf-head"><div class="lf-kicker">FORMATIVE ASSESSMENT</div><h3>20-question lesson assessment</h3><p>Select an answer or type your answer. Options are shuffled so the correct answer is not always A, B, C or D. Your score is marked and saved automatically.</p><div class="lf-progress"><span class="lf-progress-bar"></span></div><div class="lf-progress-text"></div></div>';
+
+    const form=document.createElement('div');form.className='lf-form';
+    const dots=document.createElement('div');dots.className='lf-dots';
+    const prev=document.createElement('button');prev.type='button';prev.className='btn alt';prev.textContent='← Previous';
+    const next=document.createElement('button');next.type='button';next.className='btn';next.textContent='Next →';
+    const nav=document.createElement('div');nav.className='lf-nav';nav.append(prev,next);
+    const submit=document.createElement('button');submit.type='button';submit.className='btn lf-submit';submit.textContent='SUBMIT & MARK ASSESSMENT';
+    const result=document.createElement('div');result.className='lf-result';result.setAttribute('aria-live','polite');
+
+    prepared.forEach((item,i)=>{
+      const box=document.createElement('div');box.className='lf-question';box.dataset.index=i;
+      const title=document.createElement('h4');title.innerHTML='<span class="lf-number">'+(i+1)+'</span><span>'+esc(item.q.question)+'</span>';box.appendChild(title);
+
+      const label=document.createElement('label');label.className='lf-answer-label';label.textContent='Your answer';
+      const input=document.createElement('input');input.type='text';input.className='lf-answer-input';input.placeholder='Type your answer, or choose an option below';input.autocomplete='off';
+      label.appendChild(input);box.appendChild(label);
+
+      const choices=document.createElement('div');choices.className='lf-choices';
+      item.opts.forEach((text,j)=>{
+        const b=document.createElement('button');b.type='button';b.className='lf-choice';b.innerHTML='<b>'+String.fromCharCode(65+j)+'.</b> '+esc(text);
+        b.addEventListener('click',()=>{
+          state[i]=text;input.value=text;
+          choices.querySelectorAll('.lf-choice').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+          update();
+        });
+        choices.appendChild(b);
+      });
+      input.addEventListener('input',()=>{
+        const v=input.value.trim();
+        if(/^[A-D]$/i.test(v)) state[i]=item.opts[v.toUpperCase().charCodeAt(0)-65]||v;
+        else state[i]=v||null;
+        choices.querySelectorAll('.lf-choice').forEach((x,j)=>x.classList.toggle('selected',norm(item.opts[j])===norm(state[i])));
+        update();
+      });
+      box.appendChild(choices);form.appendChild(box);
+
+      const dot=document.createElement('button');dot.type='button';dot.className='lf-dot';dot.textContent=String(i+1);dot.addEventListener('click',()=>show(i));dots.appendChild(dot);
+    });
+
+    host.append(form,dots,nav,submit,result);
+
+    function answered(){return state.filter(Boolean).length}
+    function update(){
+      host.querySelector('.lf-progress-bar').style.width=(answered()/ITEMS*100)+'%';
+      host.querySelector('.lf-progress-text').textContent='Question '+(current+1)+' of '+ITEMS+' • '+answered()+' answered';
+      dots.querySelectorAll('.lf-dot').forEach((d,i)=>{d.classList.toggle('done',!!state[i]);d.classList.toggle('active',i===current)});
+      prev.disabled=current===0;next.style.display=current===ITEMS-1?'none':'block';submit.style.display=current===ITEMS-1?'block':'none';
+    }
+    function show(i){
+      current=Math.max(0,Math.min(ITEMS-1,i));
+      form.querySelectorAll('.lf-question').forEach((x,j)=>x.classList.toggle('active',j===current));
+      result.textContent='';result.className='lf-result';update();
+    }
+
+    prev.addEventListener('click',()=>show(current-1));
+    next.addEventListener('click',()=>{if(!state[current]){result.className='lf-result warning';result.textContent='Please answer this question before continuing.';return}show(current+1)});
+
+    submit.addEventListener('click',async()=>{
+      const missing=state.map((v,i)=>v?null:i+1).filter(Boolean);
+      if(missing.length){result.className='lf-result warning';result.textContent='Please answer all 20 questions. Unanswered: '+missing.join(', ');show(missing[0]-1);return}
+      submit.disabled=true;prev.disabled=true;next.disabled=true;submit.textContent='MARKING…';result.className='lf-result';result.textContent='Checking answers and saving your result…';
+      try{
+        const client=window.sb||((typeof sb!=='undefined')?sb:null);
+        if(!client?.rpc)throw new Error('Learning service is not ready. Please refresh and try again.');
+        const answers={};prepared.forEach((item,i)=>answers[item.q.id]=String(state[i]||''));
+        const {data,error}=await client.rpc('submit_lesson_formative',{p_lesson_id:lid,p_answers:answers});
+        if(error)throw error;
+        const row=Array.isArray(data)?data[0]:data;
+        const score=Number(row?.score||0),max=Number(row?.max_score||ITEMS),pct=max?Math.round(score/max*100):0;
+        try{localStorage.setItem(PREFIX+':'+lid,JSON.stringify({score,max_score:max,completed_at:row?.completed_at||new Date().toISOString()}))}catch{}
+        result.className='lf-result '+(pct>=50?'good':'bad');
+        result.innerHTML='<strong>Assessment completed.</strong><br>Score: '+score+'/'+max+' ('+pct+'%).<br>'+(pct>=50?'Good work. You may continue to the next lesson.':'Review the lesson carefully and try the assessment again.');
+        host.dataset.completed='true';host.dataset.score=String(score);submit.disabled=false;prev.disabled=false;next.disabled=false;submit.textContent='SUBMIT AGAIN';
+      }catch(e){
+        result.className='lf-result bad';result.textContent=e?.message||'Unable to mark this assessment. Please try again.';submit.disabled=false;prev.disabled=false;next.disabled=false;submit.textContent='SUBMIT & MARK ASSESSMENT';
+      }
+    });
+
+    const anchor=article.querySelector('button[onclick*=\"toggleLessonComplete\"]');if(anchor)anchor.before(host);else article.appendChild(host);show(0);
   }
 
   function style(){
     if(document.getElementById('lesson-formative-styles'))return;
-    const s=document.createElement('style');s.id='lesson-formative-styles';
-    s.textContent='.lesson-formative-card{margin:20px 0;padding:14px;border:1px solid #d9eee2;border-radius:18px;background:#fbfefd;scroll-margin-top:90px}.lf-head{padding:16px;background:#eef7f1;border-radius:14px;margin-bottom:14px;color:#17312a}.lf-kicker{font-size:12px;font-weight:900;color:#075c3a;letter-spacing:.4px}.lf-head h3{margin:4px 0;font-size:20px}.lf-head p{margin:0;color:#65746e;font-size:13px;line-height:1.55}.lf-progress{height:8px;background:#dfeae4;border-radius:99px;overflow:hidden;margin-top:14px}.lf-progress-bar{display:block;height:100%;width:0;background:#075c3a;transition:.2s}.lf-progress-text{font-size:12px;font-weight:800;color:#075c3a;margin-top:7px}.lf-question{display:none;padding:16px;margin:0;background:#fff;border:1px solid #dfe7e2;border-radius:14px}.lf-question.active{display:block}.lf-question h4{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;font-size:17px;line-height:1.5}.lf-number{min-width:32px;height:32px;border-radius:10px;background:#e8f3ed;color:#075c3a;display:grid;place-items:center;font-size:13px;font-weight:900}.lf-answer-label{display:block;font-size:13px;font-weight:900;color:#075c3a;margin:0 0 12px}.lf-answer-input{display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:13px 14px;border:2px solid #cfded5;border-radius:12px;background:#fff;color:#17312a;font-size:16px;outline:none}.lf-answer-input:focus{border-color:#075c3a;box-shadow:0 0 0 3px rgba(7,92,58,.10)}.lf-choices{display:grid;gap:9px;margin-top:12px}.lf-choice{display:block;width:100%;text-align:left;padding:13px;border:2px solid #dfe7e2;border-radius:12px;cursor:pointer;background:#fff;color:#17312a;min-height:48px;transition:.15s;font-size:14px}.lf-choice:active{transform:scale(.99)}.lf-choice.selected{border-color:#075c3a;background:#eef7f1}.lf-nav{display:flex;gap:9px;margin-top:12px}.lf-nav button{flex:1}.lf-submit{width:100%;margin-top:10px}.lf-result{margin-top:12px;padding:13px;border-radius:11px;line-height:1.55}.lf-result.good{background:#e9f8ee;color:#075c3a}.lf-result.bad{background:#fff0f1;color:#a3223c}.lf-result.warning{background:#fff8e8;color:#805400}.lf-dots{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}.lf-dot{width:30px;height:30px;border-radius:8px;border:1px solid #dfe7e2;background:#fff;color:#65746e;font-size:11px;font-weight:800;cursor:pointer}.lf-dot.done{background:#eef7f1;color:#075c3a;border-color:#9bc9ad}.lf-dot.active{outline:2px solid #075c3a;outline-offset:1px}@media(max-width:600px){.lesson-formative-card{padding:10px;border-radius:15px}.lf-head{padding:14px}.lf-head h3{font-size:18px}.lf-question{padding:14px}.lf-question h4{font-size:16px}.lf-choice{font-size:14px;padding:12px}.lf-answer-input{font-size:16px}.lf-dot{width:29px;height:29px}}';
+    const s=document.createElement('style');s.id='lesson-formative-styles';s.textContent=`
+.lesson-formative-card{margin:22px 0;padding:14px;border:1px solid #d9eee2;border-radius:18px;background:#fbfefd;scroll-margin-top:90px}.lf-head{padding:16px;background:#eef7f1;border-radius:14px;margin-bottom:14px;color:#17312a}.lf-kicker{font-size:12px;font-weight:900;color:#075c3a;letter-spacing:.5px}.lf-head h3{margin:4px 0;font-size:20px}.lf-head p{margin:0;color:#65746e;font-size:13px;line-height:1.55}.lf-progress{height:8px;background:#dfeae4;border-radius:99px;overflow:hidden;margin-top:14px}.lf-progress-bar{display:block;height:100%;width:0;background:#075c3a;transition:.2s}.lf-progress-text{font-size:12px;font-weight:800;color:#075c3a;margin-top:7px}.lf-question{display:none;padding:16px;background:#fff;border:1px solid #dfe7e2;border-radius:14px}.lf-question.active{display:block}.lf-question h4{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;font-size:17px;line-height:1.5}.lf-number{min-width:32px;height:32px;border-radius:10px;background:#e8f3ed;color:#075c3a;display:grid;place-items:center;font-size:13px;font-weight:900}.lf-answer-label{display:block;font-size:13px;font-weight:900;color:#075c3a}.lf-answer-input{display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:13px 14px;border:2px solid #cfded5;border-radius:12px;background:#fff;color:#17312a;font-size:16px;outline:none}.lf-answer-input:focus{border-color:#075c3a;box-shadow:0 0 0 3px rgba(7,92,58,.10)}.lf-choices{display:grid;gap:9px;margin-top:12px}.lf-choice{display:block;width:100%;text-align:left;padding:13px;border:2px solid #dfe7e2;border-radius:12px;background:#fff;color:#17312a;min-height:48px;cursor:pointer;font-size:14px}.lf-choice.selected{border-color:#075c3a;background:#eef7f1}.lf-nav{display:flex;gap:9px;margin-top:12px}.lf-nav button{flex:1}.lf-submit{width:100%;margin-top:10px}.lf-dots{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}.lf-dot{width:30px;height:30px;border-radius:8px;border:1px solid #dfe7e2;background:#fff;color:#65746e;font-size:11px;font-weight:800;cursor:pointer}.lf-dot.done{background:#eef7f1;color:#075c3a;border-color:#9bc9ad}.lf-dot.active{outline:2px solid #075c3a;outline-offset:1px}.lf-result{margin-top:12px;padding:13px;border-radius:11px;line-height:1.55}.lf-result.good{background:#e9f8ee;color:#075c3a}.lf-result.bad{background:#fff0f1;color:#a3223c}.lf-result.warning{background:#fff8e8;color:#805400}@media(max-width:600px){.lesson-formative-card{padding:10px}.lf-head{padding:14px}.lf-question{padding:14px}.lf-question h4{font-size:16px}.lf-choice{font-size:14px;padding:12px}.lf-answer-input{font-size:16px}.lf-dot{width:29px;height:29px}}
+`;
     document.head.appendChild(s);
   }
 
-  function decorate(){if(!window.__moduleQuestions?.length)return;document.querySelectorAll('.screen article.card').forEach(article=>{const n=lessonNumber(article);if(n){cleanLegacy(article);build(article,n);}});}
-  function boot(){style();decorate();let i=0;const timer=setInterval(()=>{decorate();if(++i>50)clearInterval(timer)},500);new MutationObserver(decorate).observe(document.body,{childList:true,subtree:true});}
+  function decorate(){
+    if(!Array.isArray(window.__moduleQuestions)||!window.__moduleQuestions.length)return;
+    document.querySelectorAll('.screen article.card').forEach(article=>{const n=lessonNumber(article);if(n){cleanLegacy(article);build(article,n)}});
+  }
+  function boot(){style();decorate();let i=0;const timer=setInterval(()=>{decorate();if(++i>50)clearInterval(timer)},500);new MutationObserver(decorate).observe(document.body,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
