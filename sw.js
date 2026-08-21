@@ -1,4 +1,4 @@
-const CACHE='isdlss-lms-v14-is-dlss';
+const CACHE='isdlss-lms-v15-formative-assessment';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest'];
 const OLD_SUPABASE='https://mnypxpwcfydyqeiyigom.supabase.co';
 const NEW_SUPABASE='https://vahkwyetointavhzwfef.supabase.co';
@@ -9,7 +9,8 @@ async function normalizeResponse(req,res){
   const url=new URL(req.url);
   const type=res.headers.get('content-type')||'';
   if(url.origin===location.origin && type.includes('text/html')){
-    const text=(await res.text()).replaceAll(OLD_SUPABASE,NEW_SUPABASE).replaceAll(OLD_KEY,NEW_KEY);
+    let text=(await res.text()).replaceAll(OLD_SUPABASE,NEW_SUPABASE).replaceAll(OLD_KEY,NEW_KEY);
+    if(!text.includes('formative-assessment.js'))text=text.replace('</body>','<script src="formative-assessment.js"></script></body>');
     return new Response(text,{status:res.status,statusText:res.statusText,headers:res.headers});
   }
   return res;
