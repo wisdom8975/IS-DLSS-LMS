@@ -12,21 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Replace deleted Supabase project reference
+      - name: Replace deleted Supabase project reference and key
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text()
-          old = 'https://mnypxpwcfydyqeiyigom.supabase.co'
-          new = 'https://vahkwyetointavhzwfef.supabase.co'
-          if old in s:
-              p.write_text(s.replace(old, new))
+          s = s.replace('https://mnypxpwcfydyqeiyigom.supabase.co', 'https://vahkwyetointavhzwfef.supabase.co')
+          s = s.replace('sb_publishable_i_o3Rk-7ry1yRBxdWu67Dw_iW4SdTIE', 'sb_publishable_gAs0e-XS4JVWNduZSBMqfw_49bLInX7')
+          p.write_text(s)
           m = Path('supabase/migrations/20260820170000_harden_authoritative_lms_access.sql')
           if m.exists():
-              t = m.read_text()
-              t = t.replace('mnypxpwcfydyqeiyigom', 'vahkwyetointavhzwfef')
-              m.write_text(t)
+              m.write_text(m.read_text().replace('mnypxpwcfydyqeiyigom', 'vahkwyetointavhzwfef'))
           PY
       - name: Commit connection change
         run: |
@@ -36,6 +33,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No connection changes required.'
           else
-            git commit -m 'fix: reconnect LMS to IS-DLSS Supabase'
+            git commit -m 'fix: use IS-DLSS Supabase publishable key'
             git push
           fi
