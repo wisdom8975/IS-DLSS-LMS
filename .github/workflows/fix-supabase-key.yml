@@ -1,0 +1,33 @@
+name: Fix Supabase publishable key
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace legacy publishable key
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = 'sb_publishable_i_o3Rk-7ry1yRBxdWu67Dw_iW4SdTIE'
+          new = 'sb_publishable_gAs0e-XS4JVWNduZSBMqfw_49bLInX7'
+          if old not in s:
+              print('Legacy key not present; nothing to change.')
+          else:
+              p.write_text(s.replace(old, new))
+              print('Updated Supabase publishable key.')
+          PY
+      - name: Commit and push if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: use current IS-DLSS Supabase publishable key'
+          git push
