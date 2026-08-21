@@ -1,0 +1,33 @@
+name: Fix IS-DLSS auth gateway
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Switch login gateway
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = "'/functions/v1/auth-gateway'"
+          new = "'/functions/v1/auth-gateway-v2'"
+          if old in s:
+              p.write_text(s.replace(old, new))
+              print('Updated auth gateway URL.')
+          else:
+              print('Auth gateway URL already updated or not found.')
+          PY
+      - name: Commit and push if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: route LMS login through stable auth gateway'
+          git push
