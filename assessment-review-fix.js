@@ -92,15 +92,19 @@
     }
   }
 
-  window.assessment=assessmentReview;
-
-  // A teacher must be able to type uninterrupted feedback. The LMS has a live
-  // refresh loop for notifications, attempts and analytics. Never re-render the
-  // Assessment Centre while the feedback editor exists, otherwise the textarea
-  // DOM nodes are replaced and the teacher loses focus/text while typing.
+  // The feedback editor lives in a fixed overlay. Once it is open, the
+  // Assessment Centre must not re-render until the teacher has saved or closed
+  // the editor. This prevents live notifications/analytics refreshes from
+  // interrupting typing or replacing the assessment screen.
   function feedbackEditorOpen(){
-    return !!document.querySelector('#fb_feedback,#fb_strengths,#fb_improvement,#fb_action');
+    return !!document.querySelector('#isdFeedbackOverlay,#isd_fb_feedback,#isd_fb_strengths,#isd_fb_improvement,#isd_fb_action');
   }
+
+  // Block direct Assessment Centre re-renders while the teacher is editing.
+  window.assessment=async function(){
+    if(feedbackEditorOpen()) return;
+    return assessmentReview.apply(this,arguments);
+  };
 
   function installFeedbackRefreshGuard(){
     if(window.__isdFeedbackRefreshGuardInstalled) return;
@@ -114,7 +118,7 @@
   }
 
   // The live-update function is declared by the main LMS script. Install the
-  // guard as soon as it becomes available, without changing the existing live
+  // guard as soon as it becomes available, without changing existing live
   // notification/analytics behaviour outside the feedback editor.
   installFeedbackRefreshGuard();
   const guardTimer=setInterval(function(){
