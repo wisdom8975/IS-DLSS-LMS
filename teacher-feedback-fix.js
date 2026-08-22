@@ -1,6 +1,6 @@
 // Teacher feedback editor isolation.
-// Resolves the LMS's lexical role/currentUser/sb state instead of assuming
-// those variables are window properties.
+// The feedback form is a manual editor: the teacher can type, edit and save
+// without the assessment page replacing or refreshing the form.
 (function(){
   'use strict';
 
@@ -82,7 +82,7 @@
       const readOnly=currentRole!=='Teacher';
       overlay.innerHTML=`<div style="background:#fff;width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.28)">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><span class="badge">${readOnly?'FEEDBACK':'TEACHER FEEDBACK'}</span><h2 style="margin:8px 0 3px">${esc(module.title)}</h2><p class="muted small">${esc(course.title)} · Score ${esc(attempt.score)}/${esc(attempt.max_score)}</p></div><button id="isdFeedbackClose" class="btn alt" type="button">Close</button></div>
-        <div class="notice" style="margin:14px 0">${readOnly?'Teacher feedback and your action plan are shown below.':'Live assessment evidence is paused while you edit. Nothing on this form is replaced or refreshed until you save or close it.'}</div>
+        <div class="notice" style="margin:14px 0">${readOnly?'Teacher feedback and your action plan are shown below.':'Type your feedback below and save it when you are finished. The form will stay in place while you write.'}</div>
         <label><b>Overall feedback</b></label><textarea id="isd_fb_feedback" ${readOnly?'readonly':''} placeholder="Enter overall feedback...">${esc(existing?.feedback||'')}</textarea>
         <label><b>Strengths</b></label><textarea id="isd_fb_strengths" ${readOnly?'readonly':''} placeholder="Describe the learner's strengths...">${esc(existing?.strengths||'')}</textarea>
         <label><b>Improvement area</b></label><textarea id="isd_fb_improvement" ${readOnly?'readonly':''} placeholder="Identify what should improve...">${esc(existing?.improvement_area||'')}</textarea>
