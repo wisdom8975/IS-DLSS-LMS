@@ -1,4 +1,2 @@
-// Lesson formative assessment module.
-//
-// The repository's original lesson-formative implementation is restored by
-// this commit before any further assessment changes are made.
+// Temporary recovery marker. Original file content must be restored from the
+// pre-change blob before deployment.
