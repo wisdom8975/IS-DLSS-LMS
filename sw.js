@@ -1,5 +1,5 @@
-const CACHE='isdlss-v20260822-22';
-const ASSESSMENT_VERSION='20260822-feedback-overlay-v2';
+const CACHE='isdlss-v20260822-23';
+const ASSESSMENT_VERSION='20260822-review-feedback-separate-v1';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./module-assessment.js','./assessment-loader.js','./assessment-review-fix.js','./teacher-feedback-fix.js','./assessment-runtime-guard.js','./production-finalizer.js','./feedback-session-lock.js'];
 self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).catch(()=>{}));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()).then(()=>self.clients.matchAll({type:'window',includeUncontrolled:true})).then(clients=>Promise.all(clients.map(client=>client.url.startsWith(self.location.origin)&&'navigate' in client?client.navigate(client.url).catch(()=>null):null))));});
