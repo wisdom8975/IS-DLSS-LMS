@@ -1,3 +1,3 @@
-Deployment trigger for the IS-DLSS Supabase key correction.
+Deployment trigger for the IS-DLSS production fixes.
 
-Production redeploy requested 2026-08-22 04:20 UTC to ensure the latest lesson-level formative assessment code is served.
+Production redeploy requested 2026-08-22 to ensure the latest administrator dashboard and assessment centre code is served.
