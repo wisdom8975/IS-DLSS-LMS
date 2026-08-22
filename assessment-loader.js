@@ -1,7 +1,7 @@
 // Production loader for the isolated module-level formative assessment engine.
 (function(){
   'use strict';
-  const VERSION='20260822-module-assessment-v1';
+  const VERSION='20260822-module-assessment-v2';
 
   function add(src,attr){
     if(document.querySelector('script[src*="'+src+'"]')) return;
@@ -36,10 +36,6 @@
           const text=(h.textContent||'').trim().toLowerCase();
           if(text==='📝 formative quiz' || text==='formative quiz') h.textContent='📝 Formative Assessment';
         });
-
-        if(window.ModuleAssessment && typeof window.ModuleAssessment.mount==='function'){
-          await window.ModuleAssessment.mount({moduleId,courseId,container:host});
-        }
       }catch(error){
         console.error('IS-DLSS module assessment attachment failed:',error);
       }
@@ -50,7 +46,7 @@
 
   function load(){
     // The LMS now uses one isolated 20-question objective assessment per module.
-    // Do not load the retired lesson-level or legacy inline quiz engine.
+    // Do not load the retired lesson-level or legacy formative engine.
     add('module-assessment.js','data-module-assessment');
     attachToOpenModule();
     let attempts=0;
