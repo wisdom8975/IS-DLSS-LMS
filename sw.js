@@ -1,13 +1,21 @@
-// IS-DLSS production delivery service worker.
-// Cache only. Runtime modules are loaded by index.html itself.
-const CACHE='isdlss-v20260822-31';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./module-assessment.js','./assessment-loader.js','./assessment-review-fix.js','./teacher-feedback-fix.js','./assessment-runtime-guard.js','./production-finalizer.js','./feedback-session-lock.js','./teacher-feedback-dashboard.js','./teacher-learner-centre.js','./teacher-interventions.js','./runtime-stability-guard.js','./administrator-dashboard.js'];
-self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).catch(()=>{}));});
-self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
-self.addEventListener('fetch',event=>{const request=event.request;if(request.method!=='GET')return;const url=new URL(request.url);if(url.origin!==self.location.origin)return;
-if(url.pathname.endsWith('/sw.js')){event.respondWith(fetch(request,{cache:'no-store'}));return;}
-if(request.mode==='navigate'||url.pathname.endsWith('/index.html')){event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(c=>c.put('./index.html',copy)).catch(()=>{});}return response;}).catch(()=>caches.match('./index.html')));return;}
-const runtimeAssets=['/module-assessment.js','/assessment-loader.js','/assessment-review-fix.js','/teacher-feedback-fix.js','/assessment-runtime-guard.js','/production-finalizer.js','/feedback-session-lock.js','/teacher-feedback-dashboard.js','/teacher-learner-centre.js','/teacher-interventions.js','/administrator-dashboard.js','/runtime-stability-guard.js'];
-if(url.pathname.endsWith('/production-finalizer.js')){event.respondWith(fetch(request,{cache:'no-store'}).then(async response=>{if(!response.ok)return response;const original=await response.text();const guard=await fetch(new URL('/runtime-stability-guard.js',self.location.origin),{cache:'no-store'}).then(r=>r.ok?r.text():'').catch(()=> '');return new Response(original+'\n'+guard,{status:response.status,statusText:response.statusText,headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store'}});}).catch(()=>caches.match(request)));return;}
-if(runtimeAssets.some(path=>url.pathname.endsWith(path))){event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{if(response.ok)caches.open(CACHE).then(c=>c.put(request,response.clone())).catch(()=>{});return response;}).catch(()=>caches.match(request)));return;}
-event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok)caches.open(CACHE).then(c=>c.put(request,response.clone())).catch(()=>{});return response;}).catch(()=>cached)));});
+// IS-DLSS emergency stability service worker.
+// The LMS is currently served directly by Vercel. Do not cache or inject
+// application JavaScript here: stale/duplicated runtime code can prevent
+// the mobile browser from completing startup.
+self.addEventListener('install', event => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(key => caches.delete(key)));
+    await self.registration.unregister();
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of clients) {
+      try { client.navigate(client.url); } catch (_) {}
+    }
+  })());
+});
+
+// Intentionally no fetch handler. Browser/Vercel network delivery is authoritative.
