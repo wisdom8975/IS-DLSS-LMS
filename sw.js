@@ -1,5 +1,5 @@
-const CACHE = 'isdlss-v20260822-16';
-const ASSESSMENT_VERSION = '20260822-module-assessment-v9';
+const CACHE = 'isdlss-v20260822-17';
+const ASSESSMENT_VERSION = '20260822-module-assessment-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -24,7 +24,7 @@ self.addEventListener('activate', event => {
       .then(clients => Promise.all(clients.map(client => {
         if(client.url.startsWith(self.location.origin) && 'navigate' in client) return client.navigate(client.url).catch(() => null);
         return null;
-      })))
+      })));
   );
 });
 
@@ -34,7 +34,6 @@ self.addEventListener('fetch', event => {
   const url=new URL(request.url);
   if(url.origin!==self.location.origin) return;
 
-  // Never let an older service worker trap the next service-worker script.
   if(url.pathname.endsWith('/sw.js')){
     event.respondWith(fetch(request,{cache:'no-store'}));
     return;
