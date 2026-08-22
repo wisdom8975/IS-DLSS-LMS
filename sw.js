@@ -1,11 +1,14 @@
-const CACHE = 'isdlss-v20260822-13';
-const ASSESSMENT_VERSION = '20260822-module-assessment-v3';
+const CACHE = 'isdlss-v20260822-14';
+const ASSESSMENT_VERSION = '20260822-module-assessment-v7';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './module-assessment.js',
-  './assessment-loader.js'
+  './assessment-loader.js',
+  './assessment-review-fix.js',
+  './teacher-feedback-fix.js',
+  './assessment-runtime-guard.js'
 ];
 
 self.addEventListener('install', event => {
@@ -27,9 +30,6 @@ self.addEventListener('activate', event => {
       .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
       .then(clients => Promise.all(
         clients.map(client => {
-          // The existing document was loaded before this worker could intercept
-          // its navigation. Reload it once so the HTML response is passed through
-          // the assessment-loader injection path. This runs once per SW version.
           if (client.url.startsWith(self.location.origin) && 'navigate' in client) {
             return client.navigate(client.url).catch(() => null);
           }
@@ -52,9 +52,14 @@ self.addEventListener('fetch', event => {
         .then(async response => {
           const text = await response.clone().text();
           let html = text;
-          const loader = '<script src="assessment-loader.js?v=' + ASSESSMENT_VERSION + '" defer data-assessment-loader></script>';
-          if (!html.includes('data-assessment-loader')) {
-            html = html.replace('</head>', loader + '</head>');
+          const scripts = [
+            '<script src="assessment-review-fix.js?v=' + ASSESSMENT_VERSION + '" defer data-assessment-review-fix></script>',
+            '<script src="teacher-feedback-fix.js?v=' + ASSESSMENT_VERSION + '" defer data-teacher-feedback-fix></script>',
+            '<script src="assessment-runtime-guard.js?v=' + ASSESSMENT_VERSION + '" defer data-assessment-runtime-guard></script>',
+            '<script src="assessment-loader.js?v=' + ASSESSMENT_VERSION + '" defer data-assessment-loader></script>'
+          ].join('');
+          if (!html.includes('data-assessment-review-fix')) {
+            html = html.replace('</head>', scripts + '</head>');
           }
           const headers = new Headers(response.headers);
           headers.set('content-type', 'text/html; charset=utf-8');
@@ -72,7 +77,10 @@ self.addEventListener('fetch', event => {
 
   if (
     url.pathname.endsWith('/module-assessment.js') ||
-    url.pathname.endsWith('/assessment-loader.js')
+    url.pathname.endsWith('/assessment-loader.js') ||
+    url.pathname.endsWith('/assessment-review-fix.js') ||
+    url.pathname.endsWith('/teacher-feedback-fix.js') ||
+    url.pathname.endsWith('/assessment-runtime-guard.js')
   ) {
     event.respondWith(
       fetch(request, { cache: 'no-store' })
