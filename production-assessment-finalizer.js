@@ -1,42 +1,23 @@
-// Final production assessment override.
-// This file is intentionally loaded after index.html's inline application code
-// so the original live-assessment function cannot win the race at boot.
+// Final production assessment loader.
+// Loaded after index.html so assessment-review-fix and feedback-fix run
+// after the original inline LMS functions have been declared.
 (function(){
   'use strict';
+  const VERSION='20260822-assessment-final';
+  const files=[
+    'assessment-review-fix.js',
+    'teacher-feedback-fix.js',
+    'assessment-loader.js'
+  ];
 
-  function install(){
-    if(typeof window.assessment!=='function') return false;
-    if(window.__isdProductionAssessmentFinalizerInstalled) return true;
-
-    const staticAssessment = window.assessment;
-    window.assessment = function(){
-      window.__isdAssessmentStaticView = true;
-      return staticAssessment.apply(this, arguments);
-    };
-
-    if(typeof window.refreshLiveSurface==='function'){
-      const refresh = window.refreshLiveSurface;
-      window.refreshLiveSurface = async function(reason){
-        if(window.__isdAssessmentStaticView || window.__isdFeedbackEditing) return;
-        return refresh.apply(this, arguments);
-      };
-    }
-
-    if(typeof window.show==='function'){
-      const show = window.show;
-      window.show = function(view, el){
-        if(view !== 'assessment') window.__isdAssessmentStaticView = false;
-        return show.apply(this, arguments);
-      };
-    }
-
-    window.__isdProductionAssessmentFinalizerInstalled = true;
-    return true;
+  function load(src){
+    if(document.querySelector('script[data-production-assessment-src="'+src+'"]')) return;
+    const s=document.createElement('script');
+    s.src=src+'?v='+VERSION;
+    s.async=false;
+    s.setAttribute('data-production-assessment-src',src);
+    document.body.appendChild(s);
   }
 
-  install();
-  const timer=setInterval(function(){
-    if(install()) clearInterval(timer);
-  },50);
-  setTimeout(function(){clearInterval(timer);},10000);
+  files.forEach(load);
 })();
