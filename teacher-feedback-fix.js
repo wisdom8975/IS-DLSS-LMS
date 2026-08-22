@@ -142,12 +142,13 @@
   function installClickInterceptor(){
     if(window.__isdTeacherFeedbackClickInterceptor) return;
     document.addEventListener('click',function(event){
-      if(getRole()!=='Teacher') return;
+      const role=getRole();
+      if(role!=='Teacher' && role!=='Administrator') return;
       if(window.__isdFeedbackEditing) return;
       const button=event.target && event.target.closest ? event.target.closest('button') : null;
       if(!button) return;
       const label=(button.textContent||'').replace(/\s+/g,' ').trim();
-      if(!/^Review\s*&\s*Feedback$/i.test(label)) return;
+      if(!/^Review(?:\s*&\s*Feedback)?$/i.test(label)) return;
       const inline=button.getAttribute('onclick')||'';
       const match=inline.match(/assessmentDetail\(\s*['\"]([^'\"]+)['\"]\s*\)/i);
       if(!match) return;
@@ -160,7 +161,7 @@
 
   function install(){
     installClickInterceptor();
-    if(typeof window.assessmentDetail==='function' && !window.__isdTeacherFeedbackFix){
+    if(!window.__isdTeacherFeedbackFix){
       window.assessmentDetail=async function(attemptId){ await openFeedback(attemptId); };
       window.__isdTeacherFeedbackFix=true;
     }
