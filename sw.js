@@ -1,17 +1,25 @@
-// IS-DLSS production service worker retirement.
-// The LMS does not use a service-worker cache. Network delivery from Vercel is authoritative.
-// This worker only removes older workers/caches and NEVER navigates or reloads an open page.
-self.addEventListener('install', event => {
-  self.skipWaiting();
-});
+// IS-DLSS production service worker.
+// Network delivery is authoritative. No HTML caching and no page navigation/reload.
+// A tiny post-auth stability patch is appended to production-finalizer after it is
+// fetched from Vercel; no other application scripts are intercepted.
+const LOGIN_FIX='/login-stability-fix.js';
 
-self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    try {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(key => caches.delete(key)));
-    } catch (_) {}
-    try { await self.registration.unregister(); } catch (_) {}
-    // Deliberately do not call client.navigate().
+self.addEventListener('install',event=>{event.waitUntil(self.skipWaiting());});
+self.addEventListener('activate',event=>{event.waitUntil(self.clients.claim());});
+
+self.addEventListener('fetch',event=>{
+  const req=event.request;
+  if(req.method!=='GET')return;
+  const url=new URL(req.url);
+  if(url.origin!==self.location.origin)return;
+  if(!url.pathname.endsWith('/production-finalizer.js'))return;
+  event.respondWith((async()=>{
+    try{
+      const original=await fetch(req,{cache:'no-store'});
+      if(!original.ok)return original;
+      const source=await original.text();
+      const fix=await fetch(new URL(LOGIN_FIX,self.location.origin),{cache:'no-store'}).then(r=>r.ok?r.text():'').catch(()=> '');
+      return new Response(source+'\n'+fix,{status:original.status,statusText:original.statusText,headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store'}});
+    }catch(_){return fetch(req);}
   })());
 });
