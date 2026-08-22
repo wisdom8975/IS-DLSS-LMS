@@ -1,8 +1,36 @@
 // Teacher feedback editor isolation.
-// The feedback surface is a separate editing session: no live assessment
-// evidence refresh may replace it, even while its initial data is loading.
+// Resolves the LMS's lexical role/currentUser/sb state instead of assuming
+// those variables are window properties.
 (function(){
   'use strict';
+
+  const SUPABASE_URL='https://vahkwyetointavhzwfef.supabase.co';
+  const SUPABASE_KEY='sb_publishable_gAs0e-XS4JVWNduZSBMqfw_49bLInX7';
+  let db=null;
+
+  function getRole(){
+    const select=document.getElementById('role');
+    return select && select.value ? select.value : 'Student';
+  }
+
+  function getDb(){
+    if(window.sb) return window.sb;
+    if(db) return db;
+    if(window.supabase && typeof window.supabase.createClient==='function'){
+      db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+      return db;
+    }
+    return null;
+  }
+
+  async function getUser(){
+    if(window.currentUser) return window.currentUser;
+    const client=getDb();
+    if(!client) return null;
+    const {data,error}=await client.auth.getUser();
+    if(error) throw error;
+    return data?.user||null;
+  }
 
   function esc(v){
     return String(v==null?'':v).replace(/[&<>\"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]);});
@@ -18,38 +46,40 @@
   }
 
   async function openFeedback(attemptId){
-    if(!attemptId || !window.sb || !window.currentUser) return;
+    const client=getDb();
+    const user=await getUser();
+    if(!attemptId || !client || !user) return;
 
-    // Lock the Assessment Centre BEFORE any asynchronous database request.
     window.__isdFeedbackEditing=true;
     const overlay=makeOverlay();
 
     try{
-      const {data:attempt,error:attemptError}=await window.sb.from('quiz_attempts')
+      const {data:attempt,error:attemptError}=await client.from('quiz_attempts')
         .select('id,student_id,module_id,score,max_score,submitted_at').eq('id',attemptId).single();
       if(attemptError) throw attemptError;
 
-      const {data:module,error:moduleError}=await window.sb.from('modules')
+      const {data:module,error:moduleError}=await client.from('modules')
         .select('id,title,course_id').eq('id',attempt.module_id).single();
       if(moduleError) throw moduleError;
 
-      const {data:course,error:courseError}=await window.sb.from('courses')
+      const {data:course,error:courseError}=await client.from('courses')
         .select('id,title,instructor_id').eq('id',module.course_id).single();
       if(courseError) throw courseError;
 
-      if(window.role==='Teacher' && course.instructor_id!==window.currentUser.id){
+      const currentRole=getRole();
+      if(currentRole==='Teacher' && course.instructor_id!==user.id){
         throw new Error('You are not authorized to review this assessment.');
       }
-      if(window.role==='Student' && attempt.student_id!==window.currentUser.id){
+      if(currentRole==='Student' && attempt.student_id!==user.id){
         throw new Error('You are not authorized to view this assessment.');
       }
 
-      const {data:existing,error:feedbackError}=await window.sb.from('assessment_feedback')
+      const {data:existing,error:feedbackError}=await client.from('assessment_feedback')
         .select('id,reviewer_id,feedback,strengths,improvement_area,action_plan,updated_at')
         .eq('attempt_id',attemptId).maybeSingle();
       if(feedbackError) throw feedbackError;
 
-      const readOnly=window.role!=='Teacher';
+      const readOnly=currentRole!=='Teacher';
       overlay.innerHTML=`<div style="background:#fff;width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.28)">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><span class="badge">${readOnly?'FEEDBACK':'TEACHER FEEDBACK'}</span><h2 style="margin:8px 0 3px">${esc(module.title)}</h2><p class="muted small">${esc(course.title)} · Score ${esc(attempt.score)}/${esc(attempt.max_score)}</p></div><button id="isdFeedbackClose" class="btn alt" type="button">Close</button></div>
         <div class="notice" style="margin:14px 0">${readOnly?'Teacher feedback and your action plan are shown below.':'Live assessment evidence is paused while you edit. Nothing on this form is replaced or refreshed until you save or close it.'}</div>
@@ -74,7 +104,7 @@
           try{
             const payload={
               attempt_id:attemptId,
-              reviewer_id:window.currentUser.id,
+              reviewer_id:user.id,
               feedback:document.getElementById('isd_fb_feedback').value.trim(),
               strengths:document.getElementById('isd_fb_strengths').value.trim(),
               improvement_area:document.getElementById('isd_fb_improvement').value.trim(),
@@ -84,10 +114,10 @@
               throw new Error('Enter at least one feedback field before saving.');
             }
             if(existing?.id){
-              const {error}=await window.sb.from('assessment_feedback').update(payload).eq('id',existing.id);
+              const {error}=await client.from('assessment_feedback').update(payload).eq('id',existing.id);
               if(error) throw error;
             }else{
-              const {error}=await window.sb.from('assessment_feedback').insert(payload);
+              const {error}=await client.from('assessment_feedback').insert(payload);
               if(error) throw error;
             }
             status.textContent='Feedback saved successfully.';
@@ -109,13 +139,10 @@
     }
   }
 
-  // Hard-stop the legacy inline onclick before it can navigate/re-render the
-  // Assessment Centre. This works even when another script defines or replaces
-  // assessmentDetail after this file loads.
   function installClickInterceptor(){
     if(window.__isdTeacherFeedbackClickInterceptor) return;
     document.addEventListener('click',function(event){
-      if(window.role!=='Teacher') return;
+      if(getRole()!=='Teacher') return;
       if(window.__isdFeedbackEditing) return;
       const button=event.target && event.target.closest ? event.target.closest('button') : null;
       if(!button) return;
@@ -133,14 +160,15 @@
 
   function install(){
     installClickInterceptor();
-    if(typeof window.assessmentDetail!=='function' || window.__isdTeacherFeedbackFix) return;
-    window.assessmentDetail=async function(attemptId){ await openFeedback(attemptId); };
-    window.__isdTeacherFeedbackFix=true;
+    if(typeof window.assessmentDetail==='function' && !window.__isdTeacherFeedbackFix){
+      window.assessmentDetail=async function(attemptId){ await openFeedback(attemptId); };
+      window.__isdTeacherFeedbackFix=true;
+    }
   }
 
   install();
   const timer=setInterval(function(){
     install();
-    if(window.__isdTeacherFeedbackFix && window.__isdTeacherFeedbackClickInterceptor) clearInterval(timer);
+    if(window.__isdTeacherFeedbackClickInterceptor && window.__isdTeacherFeedbackFix) clearInterval(timer);
   },100);
 })();
