@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add role routing and teacher review hooks
+      - name: Add role routing, review bridge and dashboard coordinator
         shell: bash
         run: |
           python - <<'PY'
@@ -19,7 +19,8 @@ jobs:
           text=p.read_text(encoding='utf-8')
           tags=[
             '<script src="role-routing-fix.js?v=20260822-role-routing-v1"></script>',
-            '<script src="teacher-review-bridge.js?v=20260822-teacher-review-feedback-v1"></script>'
+            '<script src="teacher-review-bridge.js?v=20260822-teacher-review-feedback-v1"></script>',
+            '<script src="teacher-dashboard-coordinator.js?v=20260822-teacher-dashboard-coordinator-v1"></script>'
           ]
           for tag in tags:
               marker=tag.split('src="',1)[1].split('"',1)[0].split('?')[0]
@@ -34,5 +35,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Load teacher review and feedback bridge'
+          git commit -m 'Stabilize single Teacher dashboard surface'
           git push
