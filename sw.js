@@ -1,21 +1,17 @@
-// IS-DLSS emergency stability service worker.
-// The LMS is currently served directly by Vercel. Do not cache or inject
-// application JavaScript here: stale/duplicated runtime code can prevent
-// the mobile browser from completing startup.
+// IS-DLSS production service worker retirement.
+// The LMS does not use a service-worker cache. Network delivery from Vercel is authoritative.
+// This worker only removes older workers/caches and NEVER navigates or reloads an open page.
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.map(key => caches.delete(key)));
-    await self.registration.unregister();
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const client of clients) {
-      try { client.navigate(client.url); } catch (_) {}
-    }
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    } catch (_) {}
+    try { await self.registration.unregister(); } catch (_) {}
+    // Deliberately do not call client.navigate().
   })());
 });
-
-// Intentionally no fetch handler. Browser/Vercel network delivery is authoritative.
