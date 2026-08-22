@@ -1,5 +1,5 @@
-const CACHE = 'isdlss-v20260822-14';
-const ASSESSMENT_VERSION = '20260822-module-assessment-v7';
+const CACHE = 'isdlss-v20260822-15';
+const ASSESSMENT_VERSION = '20260822-module-assessment-v8';
 const ASSETS = [
   './',
   './index.html',
