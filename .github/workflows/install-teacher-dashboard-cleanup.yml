@@ -1,0 +1,45 @@
+name: Install Teacher dashboard cleanup
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add Teacher dashboard cleanup script
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          tag = '<script src="teacher-dashboard-cleanup.js?v=20260822-cleanup-v1"></script>'
+          if 'teacher-dashboard-cleanup.js' not in text:
+              if '</body>' not in text:
+                  raise SystemExit('index.html has no closing body tag')
+              text = text.replace('</body>', tag + '\n</body>', 1)
+              p.write_text(text, encoding='utf-8')
+          else:
+              print('Teacher dashboard cleanup script already installed.')
+
+      - name: Commit integration
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No integration change required.'
+            exit 0
+          fi
+          git commit -m 'Keep assessment centre off teacher landing dashboard'
+          git push
