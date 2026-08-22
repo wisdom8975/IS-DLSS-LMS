@@ -1,0 +1,34 @@
+name: Install fluid desktop layout
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add fluid layout script to index
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          text=p.read_text(encoding='utf-8')
+          marker='desktop-fluid-override.js'
+          if marker not in text:
+              tag='<script src="desktop-fluid-override.js"></script>'
+              text=text.replace('</head>', tag+'\n</head>', 1)
+              p.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit layout hook
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Install fluid desktop-first layout'
+          git push
