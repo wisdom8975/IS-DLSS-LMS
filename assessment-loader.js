@@ -1,7 +1,7 @@
 // Production loader for the isolated module-level formative assessment engine.
 (function(){
   'use strict';
-  const VERSION='20260822-module-assessment-v5';
+  const VERSION='20260822-module-assessment-v6';
 
   function add(src,attr){
     if(document.querySelector('script[src*="'+src+'"]')) return;
@@ -46,6 +46,7 @@
     add('module-assessment.js','data-module-assessment');
     add('assessment-review-fix.js','data-assessment-review-fix');
     add('teacher-feedback-fix.js','data-teacher-feedback-fix');
+    add('assessment-runtime-guard.js','data-assessment-runtime-guard');
     attachToOpenModule();
     let attempts=0;
     const timer=setInterval(function(){
