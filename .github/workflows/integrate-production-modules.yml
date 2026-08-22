@@ -1,0 +1,48 @@
+name: Integrate production modules
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Integrate production modules into index.html
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          marker = '<!-- IS-DLSS-PRODUCTION-MODULES -->'
+          if marker not in text:
+              scripts = '''\n<!-- IS-DLSS-PRODUCTION-MODULES -->\n<script src="production-finalizer.js?v=20260822-final"></script>\n<script src="feedback-session-lock.js?v=20260822-final"></script>\n<script src="teacher-feedback-dashboard.js?v=20260822-final"></script>\n<script src="teacher-learner-centre.js?v=20260822-final"></script>\n<script src="teacher-interventions.js?v=20260822-final"></script>\n'''
+              if '</body>' not in text:
+                  raise SystemExit('index.html has no closing body tag')
+              text = text.replace('</body>', scripts + '</body>', 1)
+              p.write_text(text, encoding='utf-8')
+          else:
+              print('Production module scripts already integrated.')
+
+      - name: Commit integration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- index.html; then
+            echo "No integration change required."
+          else
+            git add index.html
+            git commit -m "Integrate production LMS modules into index"
+            git push
+          fi
