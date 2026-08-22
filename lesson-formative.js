@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const ITEMS=20;
-  const VERSION='20260822-20q-v4';
+  const VERSION='20260822-20q-v5';
   const LABELS=['A','B','C','D'];
   const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
   const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -53,14 +53,6 @@
     return rows;
   }
 
-  function removeOldQuiz(){
-    document.querySelectorAll('#moduleQuiz').forEach(x=>x.remove());
-    document.querySelectorAll('h3').forEach(h=>{const t=(h.textContent||'').trim().toLowerCase();if(t==='📝 formative quiz'||t==='formative quiz')h.remove();});
-    document.querySelectorAll('#quizResult').forEach(x=>x.remove());
-    document.querySelectorAll('button').forEach(b=>{if((b.textContent||'').trim().toLowerCase()==='submit quiz')b.remove();});
-    document.querySelectorAll('.screen .notice').forEach(n=>{if((n.textContent||'').toLowerCase().includes('complete the formative quiz'))n.remove();});
-  }
-
   async function build(article){
     if(article.querySelector('.lesson-formative-card'))return;
     const lessonId=getLessonId(article);if(!lessonId)return;
@@ -109,7 +101,8 @@
         host.dataset.completed='true';host.dataset.score=String(score);submit.disabled=false;prev.disabled=false;next.disabled=false;submit.textContent='SUBMIT AGAIN';
       }catch(e){result.className='lf-result bad';result.textContent=e?.message||'Unable to mark this assessment. Please try again.';submit.disabled=false;prev.disabled=false;next.disabled=false;submit.textContent='SUBMIT & MARK ASSESSMENT';}
     });
-    const anchor=article.querySelector('button[onclick*="toggleLessonComplete"]');if(anchor)anchor.before(host);else article.appendChild(host);
+    const anchor=article.querySelector('button[onclick*="toggleLessonComplete"]');
+    if(anchor)anchor.before(host);else article.appendChild(host);
     show(0);
   }
 
@@ -121,7 +114,6 @@
   async function decorate(){
     if(running)return;running=true;
     try{
-      removeOldQuiz();
       const articles=[...document.querySelectorAll('article')].filter(isLessonArticle);
       for(const article of articles){try{await build(article);}catch(e){console.warn('Lesson formative build failed',e);}}
     }finally{running=false;}
