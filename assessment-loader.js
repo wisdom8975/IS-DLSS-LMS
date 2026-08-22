@@ -1,7 +1,7 @@
 // Production loader for the isolated module-level formative assessment engine.
 (function(){
   'use strict';
-  const VERSION='20260822-module-assessment-v2';
+  const VERSION='20260822-module-assessment-v3';
 
   function add(src,attr){
     if(document.querySelector('script[src*="'+src+'"]')) return;
@@ -36,6 +36,16 @@
           const text=(h.textContent||'').trim().toLowerCase();
           if(text==='📝 formative quiz' || text==='formative quiz') h.textContent='📝 Formative Assessment';
         });
+
+        // Mount directly with the module IDs supplied by openModule. This avoids relying on
+        // globals that may not exist in the legacy index.html.
+        if(window.ModuleAssessment && typeof window.ModuleAssessment.mount==='function'){
+          await window.ModuleAssessment.mount({
+            moduleId:moduleId,
+            courseId:courseId || null,
+            container:host
+          });
+        }
       }catch(error){
         console.error('IS-DLSS module assessment attachment failed:',error);
       }
