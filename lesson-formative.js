@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const ITEMS=20;
-  const PREFIX='isdlss-lesson-formative-v5';
+  const PREFIX='isdlss-lesson-formative-v6';
 
   const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
   const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -9,15 +9,26 @@
   function options(q){
     let x=q?.options;
     if(typeof x==='string'){try{x=JSON.parse(x)}catch{x=[]}}
-    if(Array.isArray(x))return x.map(String);
-    if(x&&typeof x==='object')return Object.keys(x).sort().map(k=>String(x[k]));
+    if(Array.isArray(x))return x.map(String).filter(Boolean);
+    if(x&&typeof x==='object')return Object.keys(x).sort().map(k=>String(x[k])).filter(Boolean);
     return [];
   }
 
-  function shuffle(a){
-    const x=a.slice();
-    for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}
-    return x;
+  // Shuffle distractors but deliberately rotate the correct-answer position.
+  // With four options, 20 questions produce five correct A, five B, five C and five D.
+  function prepare(q,index){
+    const opts=options(q);
+    if(!opts.length)return {q,opts:[]};
+    const correct=norm(q.correct_answer);
+    let correctIndex=opts.findIndex(x=>norm(x)===correct);
+    if(correctIndex<0)correctIndex=0;
+    const correctText=opts[correctIndex];
+    const distractors=opts.filter((_,i)=>i!==correctIndex);
+    for(let i=distractors.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[distractors[i],distractors[j]]=[distractors[j],distractors[i]];}
+    const target=index%opts.length;
+    const out=[];let di=0;
+    for(let i=0;i<opts.length;i++)out.push(i===target?correctText:distractors[di++]);
+    return {q,opts:out};
   }
 
   function lessonId(article){
@@ -31,7 +42,7 @@
     const m=t.match(/LESSON\s+(\d+)/i);return m?Number(m[1]):null;
   }
 
-  function questionsFor(n,lid){
+  function questionsFor(lid){
     const all=(window.__moduleQuestions||[]).filter(q=>String(q?.lesson_id||'')===String(lid));
     return all.sort((a,b)=>Number(a.position||0)-Number(b.position||0)).slice(0,ITEMS);
   }
@@ -44,18 +55,18 @@
     if(a>=0){const b=text.indexOf(study,a);c.textContent=(text.slice(0,a).trim()+'\n\n'+(b>=0?text.slice(b).trim():'')).trim();}
   }
 
-  function build(article,n){
+  function build(article){
     if(article.querySelector('.lesson-formative-card'))return;
     const lid=lessonId(article);if(!lid)return;
-    const qs=questionsFor(n,lid);if(qs.length!==ITEMS)return;
+    const qs=questionsFor(lid);if(qs.length!==ITEMS)return;
 
-    const prepared=qs.map(q=>({q,opts:shuffle(options(q))}));
+    const prepared=qs.map((q,i)=>prepare(q,i));
     const state=Array(ITEMS).fill(null);
     let current=0;
 
     const host=document.createElement('section');
     host.className='lesson-formative-card';host.dataset.lessonId=lid;
-    host.innerHTML='<div class="lf-head"><div class="lf-kicker">FORMATIVE ASSESSMENT</div><h3>20-question lesson assessment</h3><p>Select an answer or type your answer. Options are shuffled so the correct answer is not always A, B, C or D. Your score is marked and saved automatically.</p><div class="lf-progress"><span class="lf-progress-bar"></span></div><div class="lf-progress-text"></div></div>';
+    host.innerHTML='<div class="lf-head"><div class="lf-kicker">FORMATIVE ASSESSMENT</div><h3>20-question lesson assessment</h3><p>Select an answer or type your answer. Correct-answer positions are balanced across the assessment. Your result is marked and saved securely.</p><div class="lf-progress"><span class="lf-progress-bar"></span></div><div class="lf-progress-text"></div></div>';
 
     const form=document.createElement('div');form.className='lf-form';
     const dots=document.createElement('div');dots.className='lf-dots';
@@ -68,28 +79,16 @@
     prepared.forEach((item,i)=>{
       const box=document.createElement('div');box.className='lf-question';box.dataset.index=i;
       const title=document.createElement('h4');title.innerHTML='<span class="lf-number">'+(i+1)+'</span><span>'+esc(item.q.question)+'</span>';box.appendChild(title);
-
       const label=document.createElement('label');label.className='lf-answer-label';label.textContent='Your answer';
-      const input=document.createElement('input');input.type='text';input.className='lf-answer-input';input.placeholder='Type your answer, or choose an option below';input.autocomplete='off';
-      label.appendChild(input);box.appendChild(label);
+      const input=document.createElement('input');input.type='text';input.className='lf-answer-input';input.placeholder='Type your answer, or choose an option below';input.autocomplete='off';label.appendChild(input);box.appendChild(label);
 
       const choices=document.createElement('div');choices.className='lf-choices';
       item.opts.forEach((text,j)=>{
         const b=document.createElement('button');b.type='button';b.className='lf-choice';b.innerHTML='<b>'+String.fromCharCode(65+j)+'.</b> '+esc(text);
-        b.addEventListener('click',()=>{
-          state[i]=text;input.value=text;
-          choices.querySelectorAll('.lf-choice').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
-          update();
-        });
+        b.addEventListener('click',()=>{state[i]=text;input.value=text;choices.querySelectorAll('.lf-choice').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');update();});
         choices.appendChild(b);
       });
-      input.addEventListener('input',()=>{
-        const v=input.value.trim();
-        if(/^[A-D]$/i.test(v)) state[i]=item.opts[v.toUpperCase().charCodeAt(0)-65]||v;
-        else state[i]=v||null;
-        choices.querySelectorAll('.lf-choice').forEach((x,j)=>x.classList.toggle('selected',norm(item.opts[j])===norm(state[i])));
-        update();
-      });
+      input.addEventListener('input',()=>{const v=input.value.trim();state[i]=v||null;choices.querySelectorAll('.lf-choice').forEach((x,j)=>x.classList.toggle('selected',norm(item.opts[j])===norm(state[i])));update();});
       box.appendChild(choices);form.appendChild(box);
 
       const dot=document.createElement('button');dot.type='button';dot.className='lf-dot';dot.textContent=String(i+1);dot.addEventListener('click',()=>show(i));dots.appendChild(dot);
@@ -124,7 +123,7 @@
         const {data,error}=await client.rpc('submit_lesson_formative',{p_lesson_id:lid,p_answers:answers});
         if(error)throw error;
         const row=Array.isArray(data)?data[0]:data;
-        const score=Number(row?.score||0),max=Number(row?.max_score||ITEMS),pct=max?Math.round(score/max*100):0;
+        const score=Number(row?.score??0),max=Number(row?.max_score??ITEMS),pct=max?Math.round(score/max*100):0;
         try{localStorage.setItem(PREFIX+':'+lid,JSON.stringify({score,max_score:max,completed_at:row?.completed_at||new Date().toISOString()}))}catch{}
         result.className='lf-result '+(pct>=50?'good':'bad');
         result.innerHTML='<strong>Assessment completed.</strong><br>Score: '+score+'/'+max+' ('+pct+'%).<br>'+(pct>=50?'Good work. You may continue to the next lesson.':'Review the lesson carefully and try the assessment again.');
@@ -147,7 +146,7 @@
 
   function decorate(){
     if(!Array.isArray(window.__moduleQuestions)||!window.__moduleQuestions.length)return;
-    document.querySelectorAll('.screen article.card').forEach(article=>{const n=lessonNumber(article);if(n){cleanLegacy(article);build(article,n)}});
+    document.querySelectorAll('.screen article.card').forEach(article=>{const n=lessonNumber(article);if(n){cleanLegacy(article);build(article)}});
   }
   function boot(){style();decorate();let i=0;const timer=setInterval(()=>{decorate();if(++i>50)clearInterval(timer)},500);new MutationObserver(decorate).observe(document.body,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
