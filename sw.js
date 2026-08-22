@@ -1,4 +1,4 @@
-const CACHE='isdlss-v20260822-6';
+const CACHE='isdlss-v20260822-7';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./formative-assessment.js','./assessment-loader.js','./lesson-formative.js'];
 self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).catch(()=>{}));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
@@ -7,8 +7,8 @@ self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='G
   event.respondWith(fetch(req,{cache:'no-store'}).then(async response=>{
    const text=await response.clone().text();
    let injected=text;
-   const stamp='20260822-20q-v4';
-   if(!injected.includes('lesson-formative.js?v='+stamp))injected=injected.replace('</head>','<script src="formative-assessment.js?v='+stamp+'" defer data-direct-formative-assessment></script><script src="lesson-formative.js?v='+stamp+'" defer data-lesson-formative></script></head>');
+   const stamp='20260822-20q-v5';
+   if(!injected.includes('lesson-formative.js?v='+stamp))injected=injected.replace('</head>','<script src="assessment-loader.js?v='+stamp+'" defer data-assessment-loader></script><script src="lesson-formative.js?v='+stamp+'" defer data-lesson-formative></script></head>');
    const headers=new Headers(response.headers);headers.set('content-type','text/html; charset=utf-8');headers.delete('content-length');
    return new Response(injected,{status:response.status,statusText:response.statusText,headers});
   }).catch(()=>caches.match('./index.html')));return;
