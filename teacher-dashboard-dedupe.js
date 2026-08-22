@@ -1,20 +1,15 @@
-// IS-DLSS — prevent duplicate Teacher dashboard surfaces.
+// IS-DLSS — duplicate dashboard cleanup compatibility stub.
+// The legacy Teacher Feedback dashboard is no longer mounted on the landing page.
+// Do not remove or alter the original Teacher dashboard.
 (function(){
 'use strict';
 if(window.__ISDLSS_TEACHER_DASHBOARD_DEDUPE__)return;
 window.__ISDLSS_TEACHER_DASHBOARD_DEDUPE__=true;
 function clean(){
-  const hosts=[...document.querySelectorAll('#isd-teacher-feedback-dashboard')];
-  hosts.slice(1).forEach(x=>x.remove());
-  // Some older dashboard versions can render an equivalent surface without
-  // the shared host id. Keep the first real feedback dashboard only.
-  const candidates=[...document.querySelectorAll('.isd-v6-hero')];
-  candidates.slice(1).forEach(hero=>{
-    const section=hero.closest('section');
-    if(section && section!==hosts[0]) section.remove();
-  });
+  // Remove only an obsolete feedback host if an older cached script creates it.
+  document.querySelectorAll('#isd-teacher-feedback-dashboard').forEach(x=>x.remove());
 }
+window.teacherDashboardDedupe={refresh:clean};
 clean();
 new MutationObserver(()=>clean()).observe(document.body,{childList:true,subtree:true});
-window.teacherDashboardDedupe={refresh:clean};
 })();
