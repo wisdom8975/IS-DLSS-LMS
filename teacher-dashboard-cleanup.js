@@ -1,55 +1,16 @@
-// IS-DLSS — keep the Teacher landing dashboard clean.
-// The Assessment Centre is a separate navigation destination; it must not
-// be rendered underneath the Teacher Dashboard immediately after sign-in.
+// IS-DLSS — clean Teacher landing dashboard.
 (function(){
 'use strict';
-if(window.__ISDLSS_TEACHER_DASHBOARD_CLEANUP__)return;
-window.__ISDLSS_TEACHER_DASHBOARD_CLEANUP__=true;
-
-function role(){
-  return String(window.profile?.role||window.currentUser?.role||document.getElementById('role')?.value||'').trim().toLowerCase();
-}
+if(window.__ISDLSS_TEACHER_DASHBOARD_CLEANUP_V2__)return;
+window.__ISDLSS_TEACHER_DASHBOARD_CLEANUP_V2__=true;
+function role(){return String(window.profile?.role||window.currentUser?.role||document.getElementById('role')?.value||'').trim().toLowerCase();}
 function view(){return String(window.currentView||'dashboard').trim().toLowerCase();}
-function removeAssessmentSurface(){
-  if(role()!=='teacher' || view()==='assessment')return;
-  const main=document.getElementById('main');
-  if(!main)return;
-  const headings=[...main.querySelectorAll('h1,h2,h3')];
-  const heading=headings.find(h=>{
-    const t=(h.textContent||'').trim().toLowerCase();
-    return t==='learner assessment results' || t==='assessment centre' || t==='institutional assessment results';
-  });
-  if(!heading)return;
-
-  // Remove the containing assessment block rather than only its hero, so the
-  // KPI cards and assessment-history table cannot remain below the dashboard.
-  let node=heading.closest('.hero');
-  if(node && node.parentElement===main){node.remove();return;}
-  if(node){
-    let root=node;
-    while(root.parentElement && root.parentElement!==main)root=root.parentElement;
-    if(root.parentElement===main){root.remove();return;}
-  }
-  // Fallback: remove a direct assessment heading and the following assessment
-  // siblings until the next recognised Teacher Dashboard section.
-  let el=heading.closest('.card')||heading;
-  while(el && el.parentElement===main){
-    const next=el.nextElementSibling;
-    el.remove();
-    if(!next)break;
-    const text=(next.textContent||'').toLowerCase();
-    if(text.includes('teacher dashboard')||text.includes('teacher feedback'))break;
-    if(next.querySelector?.('h1,h2,h3')){const h=next.querySelector('h1,h2,h3');const ht=(h.textContent||'').toLowerCase();if(ht.includes('assessment')||ht.includes('quiz attempts')||ht.includes('assessment history'))continue;}
-    break;
-  }
-}
-function run(){
-  try{removeAssessmentSurface();}catch(e){console.warn('Teacher dashboard cleanup:',e);}
-}
-
+function main(){return document.getElementById('main');}
+function landing(){return role()==='teacher'&&(view()==='dashboard'||view()==='');}
+function counts(){const root=main(),d={students:null,courses:null,quiz:null,support:null};if(!root)return d;for(const c of root.querySelectorAll('.card')){const t=(c.textContent||'').replace(/\s+/g,' ').trim();const m=t.match(/([0-9]+(?:\.[0-9]+)?%?)\s+(Students supervised|Students enrolled|My learners|My courses|Latest quiz average|Average score|Need support|Needs feedback)/i);if(!m)continue;const v=m[1],k=m[2].toLowerCase();if(/students/.test(k))d.students??=v;else if(/my courses/.test(k))d.courses??=v;else if(/latest quiz average|average score/.test(k))d.quiz??=v;else if(/need support|needs feedback/.test(k))d.support??=v;}return d;}
+function render(){if(!landing())return;const root=main();if(!root)return;if(root.querySelector('[data-isdlss-teacher-clean-dashboard]'))return;const old=[...root.querySelectorAll('.hero')].find(x=>/teacher dashboard/i.test(x.textContent||''));if(!old)return;const d=counts(),wrap=document.createElement('section');wrap.setAttribute('data-isdlss-teacher-clean-dashboard','true');wrap.className='isdlss-teacher-clean-dashboard';wrap.innerHTML=`<div class="isdlss-tcd-header"><div><span class="isdlss-tcd-eyebrow">TEACHER DASHBOARD</span><h1>Good to see you 👋🏾</h1><p>Your teaching workspace: learners, courses, quiz performance and support needs.</p></div><button class="btn isdlss-tcd-refresh" type="button" onclick="location.reload()">↻ Refresh</button></div><div class="isdlss-tcd-grid"><article class="isdlss-tcd-card"><div class="isdlss-tcd-icon">👥</div><strong>${d.students||'0'}</strong><span>Students supervised</span></article><article class="isdlss-tcd-card"><div class="isdlss-tcd-icon">📚</div><strong>${d.courses||'0'}</strong><span>My courses</span></article><article class="isdlss-tcd-card"><div class="isdlss-tcd-icon">📊</div><strong>${d.quiz||'—'}</strong><span>Latest quiz average</span></article><article class="isdlss-tcd-card isdlss-tcd-support"><div class="isdlss-tcd-icon">🎯</div><strong>${d.support||'0'}</strong><span>Need support</span></article></div>`;root.insertBefore(wrap,root.firstChild);[...root.children].forEach(el=>{if(el===wrap)return;const text=(el.textContent||'').toLowerCase();const h=el.querySelector?.('h1,h2,h3');const ht=(h?.textContent||'').toLowerCase();if(text.includes('teacher feedback')||text.includes('learner assessment results')||text.includes('assessment history')||text.includes('quiz attempts')||ht.includes('teacher dashboard'))el.style.display='none';});}
+function run(){try{render();}catch(e){console.warn('Teacher dashboard cleanup:',e);}}
 window.teacherDashboardCleanup={refresh:run};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(run,200));
-else setTimeout(run,200);
-new MutationObserver(()=>setTimeout(run,60)).observe(document.body,{childList:true,subtree:true});
-setInterval(run,1000);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(run,300));else setTimeout(run,300);
+new MutationObserver(()=>setTimeout(run,100)).observe(document.body,{childList:true,subtree:true});
 })();
