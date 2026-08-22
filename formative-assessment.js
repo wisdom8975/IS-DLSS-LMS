@@ -1,7 +1,8 @@
-// Compatibility shim for the lesson formative assessment.
+// Compatibility and structure layer for lesson-level formative assessments.
 // The authoritative 20-question assessment is implemented in lesson-formative.js
-// and graded server-side by Supabase. This file intentionally does not render
-// the old hard-coded 5-question client-side quiz.
+// and graded server-side by Supabase. This file keeps the old module-level quiz
+// out of the page and makes every lesson assessment objective-only (A-D), matching
+// the Biology lesson assessment structure.
 (function(){
   'use strict';
 
@@ -15,36 +16,46 @@
     });
   }
 
-  // Remove the old module-level formative quiz completely.
-  // The LMS now uses the 20-question formative assessment attached to each lesson,
-  // so the previous module-level quiz would duplicate assessment content.
   function removeDuplicateModuleQuiz(){
     document.querySelectorAll('#moduleQuiz').forEach(function(el){el.remove();});
-
     document.querySelectorAll('h3').forEach(function(h){
       var text=(h.textContent||'').trim().toLowerCase();
       if(text==='📝 formative quiz' || text==='formative quiz') h.remove();
     });
-
     document.querySelectorAll('#quizResult').forEach(function(el){el.remove();});
-
-    // Remove the old module-level Submit Quiz button, but never remove
-    // the lesson-level "SUBMIT & MARK ASSESSMENT" button.
     document.querySelectorAll('button').forEach(function(btn){
       var text=(btn.textContent||'').trim().toLowerCase();
-      if(text==='submit quiz' && btn.closest('#moduleQuiz')===null) btn.remove();
+      if(text==='submit quiz' && btn.closest('.lesson-formative-card')===null) btn.remove();
     });
-
-    // Remove the explanatory notice that tells students to complete the old quiz.
     document.querySelectorAll('.screen .notice').forEach(function(n){
       var text=(n.textContent||'').trim().toLowerCase();
-      if(text.includes('complete the formative quiz')) n.remove();
+      if(text.includes('complete the formative quiz') || text.includes('complete the formative assessment')) n.remove();
+    });
+  }
+
+  function matchBiologyLessonStructure(){
+    document.querySelectorAll('.lesson-formative-card').forEach(function(card){
+      // Objective assessment: learners select one of four options. Do not show
+      // a free-text answer box because these are objective items.
+      card.querySelectorAll('.lf-answer-label,.lf-answer-input').forEach(function(el){el.remove();});
+
+      var title=card.querySelector('.lf-head h3');
+      if(title) title.textContent='20-Question Formative Assessment';
+
+      // Keep the assessment directly inside its lesson and immediately before
+      // the lesson-completion control, as in the Biology structure.
+      var article=card.closest('article');
+      var completeButton=article&&article.querySelector('button[onclick*="toggleLessonComplete"]');
+      if(article&&completeButton&&card.parentElement===article&&completeButton.previousElementSibling!==card){
+        completeButton.before(card);
+      }
     });
   }
 
   function clean(){
     removeLegacyText();
     removeDuplicateModuleQuiz();
+    matchBiologyLessonStructure();
   }
 
   function boot(){
