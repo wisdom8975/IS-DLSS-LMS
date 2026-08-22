@@ -1,2 +1,4 @@
 // Lesson formative assessment module.
-// Duplicate prevention is handled by the application data layer.
+//
+// The repository's original lesson-formative implementation is restored by
+// this commit before any further assessment changes are made.
