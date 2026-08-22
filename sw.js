@@ -1,5 +1,5 @@
-const CACHE='isdlss-v20260822-24';
-const ASSESSMENT_VERSION='20260822-teacher-feedback-dashboard-v1';
+const CACHE='isdlss-v20260822-25';
+const ASSESSMENT_VERSION='20260822-teacher-dashboard-v2';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./module-assessment.js','./assessment-loader.js','./assessment-review-fix.js','./teacher-feedback-fix.js','./assessment-runtime-guard.js','./production-finalizer.js','./feedback-session-lock.js','./teacher-feedback-dashboard.js'];
 self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).catch(()=>{}));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()).then(()=>self.clients.matchAll({type:'window',includeUncontrolled:true})).then(clients=>Promise.all(clients.map(client=>client.url.startsWith(self.location.origin)&&'navigate' in client?client.navigate(client.url).catch(()=>null):null))));});
