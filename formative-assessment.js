@@ -1,66 +1,41 @@
-// Compatibility and structure layer for lesson-level formative assessments.
-// The authoritative 20-question assessment is implemented in lesson-formative.js
-// and graded server-side by Supabase. This file keeps the old module-level quiz
-// out of the page and makes every lesson assessment objective-only (A-D), matching
-// the Biology lesson assessment structure.
+// Module-level formative assessment compatibility layer.
+// The assessment is now ONE objective A-D formative assessment per module.
+// Each module contains exactly 20 unique questions; there is no lesson-level 20-question duplication.
 (function(){
   'use strict';
 
-  function removeLegacyText(){
-    document.querySelectorAll('.lesson-content').forEach(function(c){
-      var text=c.textContent||'';
-      if(text.includes('𝗙𝗢𝗥𝗠𝗔𝗧𝗜𝗩𝗘 𝗔𝗦𝗦𝗘𝗦𝗦𝗠𝗘𝗡𝗧')){
-        var marker='𝗙𝗢𝗥𝗠𝗔𝗧𝗜𝗩𝗘 𝗔𝗦𝗦𝗘𝗦𝗦𝗠𝗘𝗡𝗧',study='𝗦𝗧𝗨𝗗𝗬 𝗖𝗛𝗘𝗖𝗞',a=text.indexOf(marker),b=text.indexOf(study,a);
-        c.textContent=(text.slice(0,a).trim()+'\\n\\n'+(b>=0?text.slice(b).trim():'')).trim();
+  function shuffleChoices(){
+    document.querySelectorAll('#moduleQuiz .choices').forEach(function(container){
+      if(container.dataset.shuffled === '1') return;
+      var items=Array.prototype.slice.call(container.querySelectorAll('.choice'));
+      if(items.length<2) return;
+      for(var i=items.length-1;i>0;i--){
+        var j=Math.floor(Math.random()*(i+1));
+        var tmp=items[i];items[i]=items[j];items[j]=tmp;
       }
+      items.forEach(function(item){container.appendChild(item);});
+      container.dataset.shuffled='1';
     });
   }
 
-  function removeDuplicateModuleQuiz(){
-    document.querySelectorAll('#moduleQuiz').forEach(function(el){el.remove();});
+  function setAssessmentHeading(){
     document.querySelectorAll('h3').forEach(function(h){
       var text=(h.textContent||'').trim().toLowerCase();
-      if(text==='📝 formative quiz' || text==='formative quiz') h.remove();
-    });
-    document.querySelectorAll('#quizResult').forEach(function(el){el.remove();});
-    document.querySelectorAll('button').forEach(function(btn){
-      var text=(btn.textContent||'').trim().toLowerCase();
-      if(text==='submit quiz' && btn.closest('.lesson-formative-card')===null) btn.remove();
-    });
-    document.querySelectorAll('.screen .notice').forEach(function(n){
-      var text=(n.textContent||'').trim().toLowerCase();
-      if(text.includes('complete the formative quiz') || text.includes('complete the formative assessment')) n.remove();
-    });
-  }
-
-  function matchBiologyLessonStructure(){
-    document.querySelectorAll('.lesson-formative-card').forEach(function(card){
-      // Objective assessment: learners select one of four options. Do not show
-      // a free-text answer box because these are objective items.
-      card.querySelectorAll('.lf-answer-label,.lf-answer-input').forEach(function(el){el.remove();});
-
-      var title=card.querySelector('.lf-head h3');
-      if(title) title.textContent='20-Question Formative Assessment';
-
-      // Keep the assessment directly inside its lesson and immediately before
-      // the lesson-completion control, as in the Biology structure.
-      var article=card.closest('article');
-      var completeButton=article&&article.querySelector('button[onclick*="toggleLessonComplete"]');
-      if(article&&completeButton&&card.parentElement===article&&completeButton.previousElementSibling!==card){
-        completeButton.before(card);
-      }
+      if(text==='📝 formative quiz' || text==='formative quiz') h.textContent='📝 Formative Assessment';
     });
   }
 
   function clean(){
-    removeLegacyText();
-    removeDuplicateModuleQuiz();
-    matchBiologyLessonStructure();
+    // Keep the module quiz visible. It is the authoritative assessment now.
+    // Remove any obsolete lesson-level formative cards if an old cached script creates one.
+    document.querySelectorAll('.lesson-formative-card').forEach(function(el){el.remove();});
+    setAssessmentHeading();
+    shuffleChoices();
   }
 
   function boot(){
     clean();
-    new MutationObserver(clean).observe(document.body,{childList:true,subtree:true});
+    new MutationObserver(function(){clean();}).observe(document.body,{childList:true,subtree:true});
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
