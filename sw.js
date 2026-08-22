@@ -1,5 +1,5 @@
-const CACHE = 'isdlss-v20260822-17';
-const ASSESSMENT_VERSION = '20260822-module-assessment-v10';
+const CACHE = 'isdlss-v20260822-18';
+const ASSESSMENT_VERSION = '20260822-assessment-final';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,8 @@ const ASSETS = [
   './assessment-loader.js',
   './assessment-review-fix.js',
   './teacher-feedback-fix.js',
-  './assessment-runtime-guard.js'
+  './assessment-runtime-guard.js',
+  './production-assessment-finalizer.js'
 ];
 
 self.addEventListener('install', event => {
@@ -44,13 +45,8 @@ self.addEventListener('fetch', event => {
       fetch(request,{cache:'no-store'}).then(async response=>{
         const text=await response.clone().text();
         let html=text;
-        const scripts=[
-          '<script src="assessment-review-fix.js?v='+ASSESSMENT_VERSION+'" defer data-assessment-review-fix></script>',
-          '<script src="teacher-feedback-fix.js?v='+ASSESSMENT_VERSION+'" defer data-teacher-feedback-fix></script>',
-          '<script src="assessment-runtime-guard.js?v='+ASSESSMENT_VERSION+'" defer data-assessment-runtime-guard></script>',
-          '<script src="assessment-loader.js?v='+ASSESSMENT_VERSION+'" defer data-assessment-loader></script>'
-        ].join('');
-        if(!html.includes('data-assessment-review-fix')) html=html.replace('</head>',scripts+'</head>');
+        const finalizer='<script src="production-assessment-finalizer.js?v='+ASSESSMENT_VERSION+'" data-production-assessment-finalizer></script>';
+        if(!html.includes('data-production-assessment-finalizer')) html=html.replace('</body>',finalizer+'</body>');
         const headers=new Headers(response.headers);
         headers.set('content-type','text/html; charset=utf-8');
         headers.delete('content-length');
@@ -60,7 +56,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if(url.pathname.endsWith('/module-assessment.js') || url.pathname.endsWith('/assessment-loader.js') || url.pathname.endsWith('/assessment-review-fix.js') || url.pathname.endsWith('/teacher-feedback-fix.js') || url.pathname.endsWith('/assessment-runtime-guard.js')){
+  if(
+    url.pathname.endsWith('/module-assessment.js') ||
+    url.pathname.endsWith('/assessment-loader.js') ||
+    url.pathname.endsWith('/assessment-review-fix.js') ||
+    url.pathname.endsWith('/teacher-feedback-fix.js') ||
+    url.pathname.endsWith('/assessment-runtime-guard.js') ||
+    url.pathname.endsWith('/production-assessment-finalizer.js')
+  ){
     event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{
       if(response.ok) caches.open(CACHE).then(cache=>cache.put(request,response.clone())).catch(()=>{});
       return response;
