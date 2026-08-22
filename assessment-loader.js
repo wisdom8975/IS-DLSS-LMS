@@ -1,7 +1,7 @@
 // Production loader for the isolated module-level formative assessment engine.
 (function(){
   'use strict';
-  const VERSION='20260822-module-assessment-v8';
+  const VERSION='20260822-module-assessment-v9';
 
   function add(src,attr){
     if(document.querySelector('script[src*="'+src+'"]')) return;
