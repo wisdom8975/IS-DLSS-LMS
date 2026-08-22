@@ -19,4 +19,31 @@ function boot(){if(!window.currentUser||!host())return;page('dashboard');}
 window.administratorDashboard={version:VERSION,refresh:()=>page('dashboard')};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,500));else setTimeout(boot,500);
 new MutationObserver(()=>{if(window.currentUser&&host()&&!document.getElementById('isd-admin-content'))page('dashboard');}).observe(document.body,{childList:true,subtree:true});
+
+// Mobile-first styling for the existing Users / Roles / Permissions screen.
+(function(){
+ const css=`@media(max-width:600px){
+  body.isd-management-mobile main{padding:10px 8px 80px!important;overflow-x:hidden!important}
+  body.isd-management-mobile main>*{max-width:100%!important}
+  body.isd-management-mobile .card,body.isd-management-mobile .screen{width:100%!important;max-width:100%!important;overflow:hidden!important;padding:14px!important}
+  body.isd-management-mobile h1,body.isd-management-mobile h2,body.isd-management-mobile h3{overflow-wrap:anywhere}
+  body.isd-management-mobile form{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important;max-width:100%!important}
+  body.isd-management-mobile form>*{min-width:0!important;max-width:100%!important}
+  body.isd-management-mobile label{display:block!important;width:100%!important;margin:0!important;font-size:13px!important;font-weight:800!important}
+  body.isd-management-mobile input,body.isd-management-mobile select,body.isd-management-mobile textarea{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;font-size:16px!important}
+  body.isd-management-mobile form button,body.isd-management-mobile .actions button{width:100%!important;max-width:100%!important;margin-top:4px!important}
+  body.isd-management-mobile table{min-width:0!important;width:100%!important;display:block!important;overflow:visible!important;background:transparent!important}
+  body.isd-management-mobile table thead{display:none!important}
+  body.isd-management-mobile table tbody{display:grid!important;gap:10px!important}
+  body.isd-management-mobile table tr{display:grid!important;grid-template-columns:1fr!important;gap:4px!important;background:#fff!important;border:1px solid var(--line)!important;border-radius:12px!important;padding:12px!important;box-shadow:var(--shadow)!important}
+  body.isd-management-mobile table td{display:flex!important;justify-content:space-between!important;gap:12px!important;align-items:flex-start!important;border:0!important;padding:4px 0!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:13px!important}
+  body.isd-management-mobile table td:before{content:attr(data-label);font-weight:800;color:var(--muted);flex:0 0 38%}
+  body.isd-management-mobile table td:first-child{font-size:15px!important;font-weight:800!important;color:var(--ink)!important}
+  body.isd-management-mobile .actions{display:grid!important;grid-template-columns:1fr!important;width:100%!important}
+ }`;
+ const st=document.createElement('style');st.id='isd-management-mobile-css';st.textContent=css;document.head.appendChild(st);
+ function mark(){const main=document.getElementById('main');if(!main)return;const text=(main.innerText||'').toLowerCase();const on=text.includes('users, roles & permissions')||text.includes('current users')||text.includes('create account');document.body.classList.toggle('isd-management-mobile',on);if(on){main.querySelectorAll('table').forEach(t=>{const heads=[...t.querySelectorAll('thead th')].map(x=>x.innerText.trim());t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((td,i)=>{if(heads[i])td.setAttribute('data-label',heads[i]);}));});}}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mark);else mark();
+ new MutationObserver(mark).observe(document.body,{childList:true,subtree:true});
+})();
 })();
