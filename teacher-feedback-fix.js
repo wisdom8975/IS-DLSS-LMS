@@ -18,7 +18,7 @@
   }
 
   async function openFeedback(attemptId){
-    if(!window.sb || !window.currentUser) return;
+    if(!attemptId || !window.sb || !window.currentUser) return;
 
     // Lock the Assessment Centre BEFORE any asynchronous database request.
     window.__isdFeedbackEditing=true;
@@ -109,7 +109,30 @@
     }
   }
 
+  // Hard-stop the legacy inline onclick before it can navigate/re-render the
+  // Assessment Centre. This works even when another script defines or replaces
+  // assessmentDetail after this file loads.
+  function installClickInterceptor(){
+    if(window.__isdTeacherFeedbackClickInterceptor) return;
+    document.addEventListener('click',function(event){
+      if(window.role!=='Teacher') return;
+      if(window.__isdFeedbackEditing) return;
+      const button=event.target && event.target.closest ? event.target.closest('button') : null;
+      if(!button) return;
+      const label=(button.textContent||'').replace(/\s+/g,' ').trim();
+      if(!/^Review\s*&\s*Feedback$/i.test(label)) return;
+      const inline=button.getAttribute('onclick')||'';
+      const match=inline.match(/assessmentDetail\(\s*['\"]([^'\"]+)['\"]\s*\)/i);
+      if(!match) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openFeedback(match[1]);
+    },true);
+    window.__isdTeacherFeedbackClickInterceptor=true;
+  }
+
   function install(){
+    installClickInterceptor();
     if(typeof window.assessmentDetail!=='function' || window.__isdTeacherFeedbackFix) return;
     window.assessmentDetail=async function(attemptId){ await openFeedback(attemptId); };
     window.__isdTeacherFeedbackFix=true;
@@ -118,6 +141,6 @@
   install();
   const timer=setInterval(function(){
     install();
-    if(window.__isdTeacherFeedbackFix) clearInterval(timer);
+    if(window.__isdTeacherFeedbackFix && window.__isdTeacherFeedbackClickInterceptor) clearInterval(timer);
   },100);
 })();
