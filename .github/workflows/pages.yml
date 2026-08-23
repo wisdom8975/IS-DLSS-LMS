@@ -24,20 +24,24 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Install navigation stability protection
+      - name: Install navigation and password lifecycle protection
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          tag = '<script src="navigation-stability-fix.js"></script>'
-          if tag not in s:
-              marker = '</head>'
-              if marker not in s:
-                  raise SystemExit('index.html does not contain </head>')
-              s = s.replace(marker, tag + '\n' + marker, 1)
-              p.write_text(s, encoding='utf-8')
+          tags = [
+              '<script src="navigation-stability-fix.js"></script>',
+              '<script src="password-change-visibility.js"></script>'
+          ]
+          marker = '</head>'
+          if marker not in s:
+              raise SystemExit('index.html does not contain </head>')
+          for tag in tags:
+              if tag not in s:
+                  s = s.replace(marker, tag + '\n' + marker, 1)
+          p.write_text(s, encoding='utf-8')
           PY
 
       - name: Upload static LMS
