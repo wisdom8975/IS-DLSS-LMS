@@ -1,0 +1,4 @@
+drop policy if exists videos_read on public.video_resources;
+create policy videos_read on public.video_resources for select to authenticated using (public.is_admin() or exists(select 1 from public.courses c where c.id=video_resources.course_id and c.instructor_id=auth.uid()) or exists(select 1 from public.course_enrolments e where e.course_id=video_resources.course_id and e.student_id=auth.uid() and e.active));
+drop policy if exists discussions_read on public.discussion_posts;
+create policy discussions_read on public.discussion_posts for select to authenticated using (public.is_admin() or exists(select 1 from public.courses c where c.id=discussion_posts.course_id and c.instructor_id=auth.uid()) or exists(select 1 from public.course_enrolments e where e.course_id=discussion_posts.course_id and e.student_id=auth.uid() and e.active));
