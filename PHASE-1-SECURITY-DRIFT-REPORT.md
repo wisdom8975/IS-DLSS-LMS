@@ -22,13 +22,13 @@ First reconstruct/synchronize the missing migrations or create a verified schema
 - Leaked password protection is disabled in Supabase Auth and should be enabled before production launch.
 - Supabase reports RLS init-plan performance warnings where `auth.*` calls are evaluated per row.
 - Supabase reports several multiple-permissive-policy warnings that should be consolidated only after authorization regression tests.
-- One unindexed foreign key exists on `intervention_updates.author_id`; a safe additive index migration has been prepared in `supabase/migrations/20260823030000_phase1_security_performance_hardening.sql`.
+- One unindexed foreign key existed on `intervention_updates.author_id`. It has now been covered by migration `20260823004441_phase1_security_performance_hardening` in production and mirrored on this branch.
 
 ## Next implementation order
 
 1. Confirm the frontend's runtime Supabase project reference.
 2. Reconcile GitHub migrations with the production migration history.
-3. Apply/test the safe foreign-key index.
+3. Verify the applied foreign-key index in production. **Completed.**
 4. Enable leaked-password protection.
 5. Regression-test Student, Teacher, and Administrator authorization.
 6. Optimize RLS policies using `(select auth.uid())` where appropriate.
